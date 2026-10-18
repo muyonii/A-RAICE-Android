@@ -3,6 +3,14 @@ package com.example.a_raiceandrd.data
 import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.model.Disease
 import com.example.a_raiceandrd.model.Treatment
+import android.content.Context
+import android.util.Log
+import com.example.a_raiceandrd.data.repository.api.ApiClient
+import com.example.a_raiceandrd.data.repository.api.DiseaseDto
+import com.example.a_raiceandrd.data.repository.api.TreatmentDto
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import java.io.File
 
 object DiseaseRepo {
 
@@ -229,4 +237,157 @@ object DiseaseRepo {
     fun getAll(): List<Disease> = diseases
 
     fun getById(id: Int): Disease? = diseases.firstOrNull { it.id == id }
+
+    fun getCategoryByName(name: String?): String? {
+        if (name.isNullOrBlank()) return null
+        val trimmed = name.trim().lowercase()
+        return diseases.firstOrNull { it.name.trim().lowercase() == trimmed }?.category
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    fun getBundledDrawableRes(name: String?): Int {
+        if (name.isNullOrBlank()) return R.drawable.ic_logo
+        val n = name.lowercase().trim()
+            .replace(" ", "_")
+            .replace("-", "_")
+        return when {
+            n.contains("bacterial_leaf_blight") || (n.contains("bacterial") && n.contains("blight")) -> R.drawable.bacterial_leaf_blight
+            n.contains("bacterial_leaf_streak") || (n.contains("leaf") && n.contains("streak")) -> R.drawable.bacterial_leaf_streak
+            n.contains("bakanae") -> R.drawable.bakanae
+            n.contains("narrow_brown") -> R.drawable.narrow_brown_spot
+            n.contains("brown_spot") -> R.drawable.brown_spot
+            n.contains("grassy_stunt") -> R.drawable.grassy_stunt_virus
+            n.contains("ragged_stunt") -> R.drawable.ragged_stunt_virus
+            n.contains("healthy") -> R.drawable.healthy_rice_plant
+            n.contains("false_smut") -> R.drawable.rice_false_smut
+            n.contains("blast") -> R.drawable.rice_blast
+            n.contains("sheath_blight") -> R.drawable.sheath_blight
+            n.contains("sheath_rot") -> R.drawable.sheath_rot
+            n.contains("stem_rot") -> R.drawable.stem_rot
+            n.contains("tungro") -> R.drawable.tungro_virus
+            else -> R.drawable.ic_logo
+        }
+    }
+
+    fun getBundledAsDto(): List<DiseaseDto> = diseases.map { d ->
+        DiseaseDto(
+            id = d.id,
+            name = d.name,
+            description = d.definition,
+            causes = d.causes,
+            symptoms = d.symptoms,
+            preventionTips = d.prevention,
+            imageUrl = null,
+            treatmentsCount = d.treatment.size,
+            history = d.history,
+            sources = d.sources,
+            treatments = d.treatment.mapIndexed { idx, t ->
+                TreatmentDto(
+                    id = idx + 1,
+                    title = t.title,
+                    description = t.description,
+                    type = t.type
+                )
+            }
+        )
+    }
+
+    fun getBundledDetailAsDto(id: Int): DiseaseDto? {
+        val d = getById(id) ?: return null
+        return DiseaseDto(
+            id = d.id,
+            name = d.name,
+            description = d.definition,
+            causes = d.causes,
+            symptoms = d.symptoms,
+            preventionTips = d.prevention,
+            imageUrl = null,
+            treatmentsCount = d.treatment.size,
+            history = d.history,
+            sources = d.sources,
+            treatments = d.treatment.mapIndexed { idx, t ->
+                TreatmentDto(
+                    id = idx + 1,
+                    title = t.title,
+                    description = t.description,
+                    type = t.type
+                )
+            }
+        )
+    }
+
+    suspend fun getDiseases(context: Context, forceRefresh: Boolean = false): List<DiseaseDto> {
+        val cacheFile = File(context.filesDir, "diseases_cache.json")
+        val gson = Gson()
+
+        try {
+            val remote = ApiClient.service.getDiseases()
+            if (remote.isNotEmpty()) {
+                try {
+                    cacheFile.writeText(gson.toJson(remote))
+                } catch (e: Exception) {
+                    Log.w("DiseaseRepo", "Failed to cache diseases", e)
+                }
+                return remote
+            }
+        } catch (e: Exception) {
+            Log.w("DiseaseRepo", "Network call getDiseases failed, falling back to cache", e)
+        }
+
+        if (cacheFile.exists()) {
+            try {
+                val json = cacheFile.readText()
+                val type = object : TypeToken<List<DiseaseDto>>() {}.type
+                val cached: List<DiseaseDto>? = gson.fromJson(json, type)
+                if (!cached.isNullOrEmpty()) {
+                    return cached
+                }
+            } catch (e: Exception) {
+                Log.w("DiseaseRepo", "Failed to read diseases cache", e)
+            }
+        }
+
+        return getBundledAsDto()
+    }
+
+    suspend fun getDiseaseDetail(context: Context, id: Int): DiseaseDto? {
+        val cacheFile = File(context.filesDir, "disease_${id}_cache.json")
+        val gson = Gson()
+
+        try {
+            val remote = ApiClient.service.getDisease(id)
+            try {
+                cacheFile.writeText(gson.toJson(remote))
+            } catch (e: Exception) {
+                Log.w("DiseaseRepo", "Failed to cache disease detail $id", e)
+            }
+            return remote
+        } catch (e: Exception) {
+            Log.w("DiseaseRepo", "Network call getDisease($id) failed, falling back to cache", e)
+        }
+
+        if (cacheFile.exists()) {
+            try {
+                val json = cacheFile.readText()
+                val cached: DiseaseDto? = gson.fromJson(json, DiseaseDto::class.java)
+                if (cached != null) return cached
+            } catch (e: Exception) {
+                Log.w("DiseaseRepo", "Failed to read disease detail cache", e)
+            }
+        }
+
+        val listCacheFile = File(context.filesDir, "diseases_cache.json")
+        if (listCacheFile.exists()) {
+            try {
+                val type = object : TypeToken<List<DiseaseDto>>() {}.type
+                val cachedList: List<DiseaseDto>? = gson.fromJson(listCacheFile.readText(), type)
+                val match = cachedList?.firstOrNull { it.id == id }
+                if (match != null) return match
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+
+        return getBundledDetailAsDto(id)
+    }
 }
