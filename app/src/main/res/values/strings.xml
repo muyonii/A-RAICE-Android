@@ -18,7 +18,34 @@
     <string name="Address">Address</string>
     <string name="Municipal">Municipality</string>
     <string name="Barangay">Barangay</string>
+    <string name="Barangay_hint">e.g., Poblacion</string>
     <string name="Create">Create Account</string>
+    <string name="Confirm_Password">Confirm Password</string>
+    <string name="Confirm_Password_hint">Re-enter password</string>
+    <string name="Contact_Number">Contact Number</string>
+    <string name="Contact_Number_hint">e.g., 09171234567</string>
+    <string name="Farm_Coordinates">Farm Location Coordinates</string>
+    <string name="Latitude">Latitude (14.3 - 14.95)</string>
+    <string name="Latitude_hint">e.g., 14.6789</string>
+    <string name="Longitude">Longitude (120.2 - 120.7)</string>
+    <string name="Longitude_hint">e.g., 120.5345</string>
+    <string name="Use_Current_Location">Use my current location</string>
+    <string name="Location_Permission_Denied">Location permission denied. Enter manually.</string>
+    <string name="Location_Unavailable">Could not get current location. Enter manually.</string>
+    <string name="Location_Fetched">Location coordinates applied</string>
+    <string name="Error_Name_Required">Full name is required</string>
+    <string name="Error_Email_Invalid">Valid email is required</string>
+    <string name="Error_Password_Length">Password must be at least 8 characters</string>
+    <string name="Error_Password_Mismatch">Passwords do not match</string>
+    <string name="Error_Municipality_Required">Please select your municipality</string>
+    <string name="Error_Barangay_Required">Barangay is required</string>
+    <string name="Error_Contact_Required">Contact number is required</string>
+    <string name="Error_Lat_Bounds">Latitude must be between 14.3 and 14.95</string>
+    <string name="Error_Long_Bounds">Longitude must be between 120.2 and 120.7</string>
+    <string name="Back_To_Login">Already have an account? Log in</string>
+    <string name="Logging_In">Logging in…</string>
+    <string name="Registering">Creating account…</string>
+    <string name="Validating_Session">Checking session…</string>
 
     <!--Navigation Bar-->
     <string name="Home">Home</string>
