@@ -157,5 +157,9 @@
         android:id="@+id/scanResultsFragment"
         android:name="com.example.a_raiceandrd.ui.scan.ScanResultsFragment"
         android:label="fragment_scan_results"
-        tools:layout="@layout/fragment_scan_results" />
+        tools:layout="@layout/fragment_scan_results">
+        <action
+            android:id="@+id/action_scanResultsFragment_to_encyDetailsFragment"
+            app:destination="@id/encyDetailsFragment" />
+    </fragment>
 </navigation>

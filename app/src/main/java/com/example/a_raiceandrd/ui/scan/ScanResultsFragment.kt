@@ -1,75 +1,178 @@
 package com.example.a_raiceandrd.ui.scan
 
-import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.View
-import androidx.navigation.fragment.findNavController
-import com.example.a_raiceandrd.R
-import com.example.a_raiceandrd.databinding.FragmentScanResultsBinding
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import android.widget.TextView
-import com.example.a_raiceandrd.data.repository.api.ApiClient
-import com.example.a_raiceandrd.data.repository.api.ScanResponse
-import com.example.a_raiceandrd.util.errorMessage
-import com.example.a_raiceandrd.databinding.TreatmentItemBinding
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
+import android.os.Bundle
+import android.view.View
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
+import com.example.a_raiceandrd.R
+import com.example.a_raiceandrd.data.repository.api.ApiClient
+import com.example.a_raiceandrd.data.repository.api.ScanDto
+import com.example.a_raiceandrd.databinding.FragmentScanResultsBinding
+import com.example.a_raiceandrd.databinding.ItemTopDiseaseBinding
+import com.example.a_raiceandrd.databinding.TreatmentItemBinding
+import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.formatTime
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
 
     private var _b: FragmentScanResultsBinding? = null
     private val b get() = _b!!
 
+    private var scanId: Int = 0
+    private var localImagePath: String? = null
+    private var scannedAtTimestamp: Long = 0L
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         _b = FragmentScanResultsBinding.bind(view)
+
         b.btnBack.setOnClickListener { findNavController().popBackStack() }
 
-        val scanId = requireArguments().getInt("scanId")
-        val scannedAt = requireArguments().getLong("scannedAt", System.currentTimeMillis())
-        loadImage(requireArguments().getString("imagePath"))
+        scanId = requireArguments().getInt("scanId", 0)
+        scannedAtTimestamp = requireArguments().getLong("scannedAt", System.currentTimeMillis())
+        localImagePath = requireArguments().getString("imagePath")
+
+        // Load local thumbnail immediately
+        loadLocalImage(localImagePath)
+
         b.tvScanned.text = SimpleDateFormat("MMM d, yyyy · h:mm a", Locale.getDefault())
-            .format(Date(scannedAt))
+            .format(Date(scannedAtTimestamp))
 
         b.resultCard.isVisible = false
+        b.tvTop3Title.isVisible = false
+        b.cardTop3.isVisible = false
         b.tvTreatment.isVisible = false
         b.treatmentCard.isVisible = false
+        b.btnRetryScan.setOnClickListener { loadScanDetails() }
+
+        loadScanDetails()
+    }
+
+    private fun loadScanDetails() {
+        b.scanResultsProgress.isVisible = true
+        b.tvMessage.isVisible = false
+        b.btnRetryScan.isVisible = false
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val scan = withContext(Dispatchers.IO) { ApiClient.service.getScan(scanId) }
-                render(scan)
+                if (_b != null) {
+                    render(scan)
+                }
             } catch (e: Exception) {
-                showMessage(errorMessage(e))
+                if (_b != null) {
+                    showMessage(errorMessage(e))
+                    b.btnRetryScan.isVisible = true
+                }
+            } finally {
+                if (_b != null) {
+                    b.scanResultsProgress.isVisible = false
+                }
             }
         }
     }
 
-    private fun render(scan: ScanResponse) {
+    private fun render(scan: ScanDto) {
+        // Load image from image_url via Glide if present
+        if (!scan.imageUrl.isNullOrBlank()) {
+            b.imageCard.isVisible = true
+            Glide.with(this)
+                .load(scan.imageUrl)
+                .placeholder(b.ivScan.drawable)
+                .error(b.ivScan.drawable)
+                .into(b.ivScan)
+        }
+
+        // Formatted scan date
+        val dateText = formatTime(scan.createdAt).ifEmpty {
+            SimpleDateFormat("MMM d, yyyy · h:mm a", Locale.getDefault())
+                .format(Date(scannedAtTimestamp))
+        }
+        b.tvScanned.text = dateText
+
+        if (scan.status.equals("failed", ignoreCase = true)) {
+            showMessage(getString(R.string.Scan_Failed))
+            b.btnRetryScan.isVisible = true
+            return
+        }
+
         val disease = scan.disease
         if (disease == null) {
             showMessage("No disease identified. Retake the photo: one leaf, close-up, daylight, plain background.")
+            b.resultCard.isVisible = true
+            b.tvDisease.text = getString(R.string.Scans_Healthy)
+            b.tvConfidence.text = scan.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
             return
         }
 
         b.resultCard.isVisible = true
-        b.tvDisease.text = disease.name
+        b.tvDisease.text = disease.name ?: getString(R.string.Scans_Healthy)
         b.tvConfidence.text = scan.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
 
+        // Outbreak association notice
+        if (scan.outbreakId != null || scan.outbreak != null) {
+            b.cardOutbreakNotice.isVisible = true
+        } else {
+            b.cardOutbreakNotice.isVisible = false
+        }
+
+        // Link to matching encyclopedia entry
+        val diseaseId = disease.id
+        if (diseaseId != null && diseaseId > 0) {
+            b.btnViewEncyclopedia.isVisible = true
+            b.btnViewEncyclopedia.setOnClickListener {
+                val args = Bundle().apply { putInt("diseaseId", diseaseId) }
+                findNavController().navigate(
+                    R.id.action_scanResultsFragment_to_encyDetailsFragment,
+                    args
+                )
+            }
+        } else {
+            b.btnViewEncyclopedia.isVisible = false
+        }
+
+        // Low confidence notice (< 0.6)
         if ((scan.confidence ?: 1.0) < 0.6) {
             showMessage("Low confidence. Consider retaking the photo in better light.")
         }
 
+        // Top 3 predictions
+        val top3 = scan.top3.orEmpty().filter {
+            !it.diseaseName.isNullOrBlank() && !it.diseaseName.equals(disease.name, ignoreCase = true)
+        }
+        if (top3.isNotEmpty()) {
+            b.tvTop3Title.isVisible = true
+            b.cardTop3.isVisible = true
+            b.llTop3.removeAllViews()
+            top3.forEach { item ->
+                val row = ItemTopDiseaseBinding.inflate(layoutInflater, b.llTop3, false)
+                row.tvTopDiseaseName.text = item.diseaseName
+                row.tvTopDiseaseConfidence.text = item.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
+                b.llTop3.addView(row.root)
+            }
+        } else {
+            b.tvTop3Title.isVisible = false
+            b.cardTop3.isVisible = false
+        }
+
+        // Treatments
         val treatments = disease.treatments.orEmpty()
         b.tvTreatment.isVisible = true
         b.treatmentCard.isVisible = true
@@ -78,6 +181,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
         if (treatments.isEmpty()) {
             b.llTreatments.addView(TextView(requireContext()).apply {
                 text = "No treatment information available."
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
             })
             return
         }
@@ -114,16 +218,21 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
         b.tvMessage.isVisible = true
     }
 
-    private fun loadImage(path: String?) {
-        if (path == null) { b.imageCard.isVisible = false; return }
+    private fun loadLocalImage(path: String?) {
+        if (path == null) {
+            b.imageCard.isVisible = false
+            return
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             val bmp = withContext(Dispatchers.IO) { decodeScaled(path) }
             if (_b == null) return@launch
-            if (bmp != null) b.ivScan.setImageBitmap(bmp) else b.imageCard.isVisible = false
+            if (bmp != null) {
+                b.imageCard.isVisible = true
+                b.ivScan.setImageBitmap(bmp)
+            }
         }
     }
 
-    // decode a smaller copy (saves memory) and fix the camera rotation
     private fun decodeScaled(path: String, maxSide: Int = 1024): Bitmap? {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(path, bounds)
@@ -134,7 +243,8 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
             ?: return null
 
         val degrees = when (ExifInterface(path).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
+        )) {
             ExifInterface.ORIENTATION_ROTATE_90 -> 90f
             ExifInterface.ORIENTATION_ROTATE_180 -> 180f
             ExifInterface.ORIENTATION_ROTATE_270 -> 270f

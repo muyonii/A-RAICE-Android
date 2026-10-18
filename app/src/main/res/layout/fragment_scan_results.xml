@@ -191,14 +191,90 @@
                             android:textColor="@color/text_primary"
                             android:textSize="15sp" />
                     </LinearLayout>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardOutbreakNotice"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:visibility="gone"
+                        app:cardBackgroundColor="@color/badge_high_bg"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp">
+
+                        <TextView
+                            android:id="@+id/tvOutbreakNotice"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/manrope_bold"
+                            android:padding="12dp"
+                            android:text="@string/Linked_Outbreak_Note"
+                            android:textColor="@color/badge_high_text"
+                            android:textSize="13sp" />
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <Button
+                        android:id="@+id/btnViewEncyclopedia"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/manrope_bold"
+                        android:text="@string/View_In_Encyclopedia"
+                        android:textColor="@color/gold"
+                        android:visibility="gone" />
+
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Top 3 / Other possible diseases -->
+            <TextView
+                android:id="@+id/tvTop3Title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="24dp"
+                android:fontFamily="@font/jetbrainsmono_regular"
+                android:letterSpacing="0.13"
+                android:text="@string/Other_Diseases"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/resultCard" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTop3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="24dp"
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/surface_card"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTop3Title"
+                app:strokeColor="@color/stroke_default"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:id="@+id/llTop3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp" />
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:id="@+id/tvTreatment"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:layout_marginStart="24dp"
                 android:layout_marginEnd="24dp"
                 android:text="@string/Treatment"
@@ -206,7 +282,7 @@
                 android:letterSpacing="0.13"
                 android:textSize="13sp"
                 android:textColor="@color/text_secondary"
-                app:layout_constraintTop_toBottomOf="@id/resultCard"
+                app:layout_constraintTop_toBottomOf="@id/cardTop3"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -231,10 +307,18 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="18dp" >
-
-                    </LinearLayout>
+                        android:padding="18dp" />
             </com.google.android.material.card.MaterialCardView>
+
+            <ProgressBar
+                android:id="@+id/scanResultsProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/imageCard"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <TextView
                 android:id="@+id/tvMessage"
@@ -245,11 +329,23 @@
                 android:layout_marginEnd="24dp"
                 android:fontFamily="@font/manrope_regular"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp"
+                android:textSize="14sp"
                 android:visibility="gone"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/treatmentCard" />
+
+            <Button
+                android:id="@+id/btnRetryScan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="@font/manrope_bold"
+                android:text="@string/Retry"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvMessage" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>

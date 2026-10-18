@@ -82,6 +82,12 @@
     <string name="Scan">Scan</string>
     <string name="Status">Analyzing image....</string>
     <string name="Hint">For best results, take a close-up in natural daylight.</string>
+    <string name="AI_Warmup_Hint">AI model is warming up. Scans may take up to a minute.</string>
+    <string name="Other_Diseases">OTHER POSSIBLE DISEASES</string>
+    <string name="View_In_Encyclopedia">View in Encyclopedia →</string>
+    <string name="Linked_Outbreak_Note">⚠ Associated with an active outbreak in this area.</string>
+    <string name="Scan_Failed">Diagnosis failed. The leaf could not be classified.</string>
+    <string name="Retry">Retry Scan</string>
 
     <!--Alerts-->
     <string name="Alerts_Sub">Notification module — risk alerts for your plots</string>

@@ -1,38 +1,40 @@
 package com.example.a_raiceandrd.ui.scan
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.a_raiceandrd.R
+import com.example.a_raiceandrd.data.repository.api.ApiClient
 import com.example.a_raiceandrd.databinding.FragmentScanBinding
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.ImageCapture
-import androidx.core.view.isVisible
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.core.content.ContextCompat
-import android.content.pm.PackageManager
-import android.Manifest
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
-import java.io.File
-import android.net.Uri
-import androidx.camera.core.ImageCaptureException
-import androidx.lifecycle.lifecycleScope
+import com.example.a_raiceandrd.util.ImageUtils
+import com.example.a_raiceandrd.util.errorMessage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import okhttp3.MultipartBody
-import androidx.core.os.bundleOf
 import okhttp3.MediaType.Companion.toMediaType
-import android.widget.Toast
-import com.example.a_raiceandrd.data.repository.api.ApiClient
-import com.example.a_raiceandrd.util.ImageUtils
+import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import com.example.a_raiceandrd.util.errorMessage
-import android.view.MotionEvent
-import androidx.camera.core.FocusMeteringAction
+import java.io.File
 
 class ScanFragment : Fragment(R.layout.fragment_scan) {
 
@@ -44,7 +46,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) startCamera()
-        else toast("Camera permission is needed to scan. You can still use the gallery.")
+        else toast(getString(R.string.Location_Permission_Denied))
     }
 
     private val galleryLauncher = registerForActivityResult(
@@ -52,6 +54,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     ) { uri -> uri?.let { submit(it) } }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         _b = FragmentScanBinding.bind(view)
 
         b.btnBack.setOnClickListener { findNavController().popBackStack() }
@@ -61,6 +64,13 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             )
         }
         b.btnCapture.setOnClickListener { capture() }
+
+        // Show AI warmup hint before the first scan
+        val prefs = requireContext().getSharedPreferences("scan_prefs", Context.MODE_PRIVATE)
+        val hasScannedBefore = prefs.getBoolean("has_scanned_before", false)
+        if (!hasScannedBefore) {
+            b.tvHint.text = getString(R.string.AI_Warmup_Hint)
+        }
 
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED) startCamera()
@@ -79,7 +89,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             val camera = provider.bindToLifecycle(
                 viewLifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageCapture
             )
-            // tap the preview to focus on the leaf
+            // Tap the preview to focus on the leaf
             b.previewView.setOnTouchListener { v, event ->
                 if (event.action == MotionEvent.ACTION_UP) {
                     val point = b.previewView.meteringPointFactory
@@ -110,6 +120,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
     private fun submit(uri: Uri) {
         setLoading(true)
+        b.tvStatus.text = getString(R.string.AI_Warmup_Hint)
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val (scan, imagePath) = withContext(Dispatchers.IO) {
@@ -130,18 +142,42 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                     val part = MultipartBody.Part.createFormData(
                         "image", "leaf.jpg", bytes.toRequestBody(mime.toMediaType())
                     )
+                    // Farmers must NOT send GPS or farmer_id
                     ApiClient.service.submitScan(part) to file.absolutePath
                 }
-                findNavController().navigate(
-                    R.id.action_scan_to_scanResultsFragment,
-                    bundleOf("scanId" to scan.id, "scannedAt" to System.currentTimeMillis(), "imagePath" to imagePath)
-                )
+
+                // If scan status failed, show retry dialog
+                if (scan.status.equals("failed", ignoreCase = true)) {
+                    showFailedDialog(uri)
+                    return@launch
+                }
+
+                val prefs = requireContext().getSharedPreferences("scan_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putBoolean("has_scanned_before", true).apply()
+
+                val args = Bundle().apply {
+                    putInt("scanId", scan.id ?: 0)
+                    putLong("scannedAt", System.currentTimeMillis())
+                    putString("imagePath", imagePath)
+                }
+                findNavController().navigate(R.id.action_scan_to_scanResultsFragment, args)
             } catch (e: Exception) {
                 toast(errorMessage(e))
             } finally {
                 if (_b != null) setLoading(false)
             }
         }
+    }
+
+    private fun showFailedDialog(retryUri: Uri) {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.Scan_title)
+            .setMessage(R.string.Scan_Failed)
+            .setPositiveButton(R.string.Retry) { _, _ ->
+                submit(retryUri)
+            }
+            .setNegativeButton(R.string.Cancel, null)
+            .show()
     }
 
     private fun setLoading(loading: Boolean) {
@@ -153,5 +189,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
     private fun toast(msg: String) =
         Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
 
-    override fun onDestroyView() { super.onDestroyView(); _b = null }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _b = null
+    }
 }
