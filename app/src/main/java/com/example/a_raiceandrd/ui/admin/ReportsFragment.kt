@@ -30,6 +30,7 @@ import com.example.a_raiceandrd.ui.auth.Role
 import com.example.a_raiceandrd.ui.hideNavOnScroll
 import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.hideKeyboard
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -276,6 +277,7 @@ class ReportsFragment : Fragment() {
             val chosenMuni = muniOptions.getOrNull(selectedMuniIndex)?.slug
             val chosenDisease = diseaseOptions.getOrNull(selectedDiseaseIndex)?.id
 
+            genBinding.root.hideKeyboard()
             genBinding.btnGenSubmit.isEnabled = false
             genBinding.pbGenLoading.isVisible = true
 

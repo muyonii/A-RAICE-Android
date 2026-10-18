@@ -14,6 +14,7 @@ import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.data.repository.api.ApiClient
 import com.example.a_raiceandrd.databinding.FragmentLoginBinding
 import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -99,6 +100,7 @@ class LoginFragment : Fragment() {
 
         if (hasError) return
 
+        hideKeyboard()
         setLoading(true)
         viewLifecycleOwner.lifecycleScope.launch {
             try {

@@ -23,6 +23,7 @@ import com.example.a_raiceandrd.ui.auth.Role
 import com.example.a_raiceandrd.ui.hideNavOnScroll
 import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.toAlertItem
 import kotlinx.coroutines.launch
 
@@ -197,6 +198,7 @@ class BroadcastFragment : Fragment() {
             val audience = audienceOptions.getOrNull(selectedAudienceIndex) ?: audienceOptions[0]
             val outbreak = outbreakOptions.getOrNull(selectedOutbreakIndex)
 
+            hideKeyboard()
             AlertDialog.Builder(requireContext())
                 .setTitle(R.string.Broadcast_Confirm_Title)
                 .setMessage(

@@ -22,6 +22,7 @@ import com.example.a_raiceandrd.data.repository.api.MunicipalityDto
 import com.example.a_raiceandrd.data.repository.api.RegisterRequest
 import com.example.a_raiceandrd.databinding.FragmentRegisterBinding
 import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -220,6 +221,7 @@ class RegisterFragment : Fragment() {
 
         if (hasError) return
 
+        hideKeyboard()
         setLoading(true)
 
         val request = RegisterRequest(

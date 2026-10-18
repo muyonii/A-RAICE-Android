@@ -32,6 +32,7 @@ import com.example.a_raiceandrd.databinding.FragmentProfileBinding
 import com.example.a_raiceandrd.ui.auth.FLogin
 import com.example.a_raiceandrd.ui.auth.Role
 import com.example.a_raiceandrd.util.errorMessage
+import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -297,6 +298,7 @@ class ProfileFragment : Fragment() {
 
             if (hasError) return@setOnClickListener
 
+            dialogView.hideKeyboard()
             dBinding.editProfileProgress.isVisible = true
             dBinding.btnSaveProfile.isEnabled = false
             dBinding.btnCancelEdit.isEnabled = false
@@ -413,6 +415,7 @@ class ProfileFragment : Fragment() {
 
             if (hasError) return@setOnClickListener
 
+            dialogView.hideKeyboard()
             dBinding.changePasswordProgress.isVisible = true
             dBinding.btnSavePassword.isEnabled = false
             dBinding.btnCancelPassword.isEnabled = false
