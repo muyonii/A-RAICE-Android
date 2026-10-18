@@ -94,7 +94,10 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.drawerFarmerRecords).setOnClickListener(soon)
         findViewById<View>(R.id.drawerResources).setOnClickListener(soon)
-        findViewById<View>(R.id.drawerAccountSettings).setOnClickListener(soon)
+        findViewById<View>(R.id.drawerAccountSettings).setOnClickListener {
+            drawer.closeDrawer(GravityCompat.START)
+            navController.navigate(R.id.profile)
+        }
 
         findViewById<View>(R.id.drawerLogout).setOnClickListener {
             drawer.closeDrawer(GravityCompat.START, false)
@@ -152,6 +155,10 @@ class MainActivity : AppCompatActivity() {
             )
             if (FLogin.getCurrentRole() != null) bindDrawer(isAdmin)
         }
+    }
+
+    fun refreshDrawer() {
+        bindDrawer(FLogin.getCurrentRole() == Role.ADMIN)
     }
 
     // fills the drawer's account row from the logged-in user

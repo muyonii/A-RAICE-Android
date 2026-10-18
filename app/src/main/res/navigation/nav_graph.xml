@@ -42,7 +42,14 @@
         android:id="@+id/home"
         android:name="com.example.a_raiceandrd.ui.home.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_scanHistoryFragment"
+            app:destination="@id/scanHistoryFragment" />
+        <action
+            android:id="@+id/action_home_to_scanResultsFragment"
+            app:destination="@id/scanResultsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/map"
@@ -92,7 +99,14 @@
         android:id="@+id/adhome"
         android:name="com.example.a_raiceandrd.ui.admin.AdHomeFragment"
         android:label="fragment_ad_home"
-        tools:layout="@layout/fragment_ad_home" />
+        tools:layout="@layout/fragment_ad_home">
+        <action
+            android:id="@+id/action_adhome_to_scanHistoryFragment"
+            app:destination="@id/scanHistoryFragment" />
+        <action
+            android:id="@+id/action_adhome_to_scanResultsFragment"
+            app:destination="@id/scanResultsFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/admap"
@@ -117,7 +131,21 @@
         android:id="@+id/profile"
         android:name="com.example.a_raiceandrd.ui.account.ProfileFragment"
         android:label="fragment_profile"
-        tools:layout="@layout/fragment_profile" />
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profile_to_scanHistoryFragment"
+            app:destination="@id/scanHistoryFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/scanHistoryFragment"
+        android:name="com.example.a_raiceandrd.ui.account.ScanHistoryFragment"
+        android:label="fragment_scan_history"
+        tools:layout="@layout/fragment_scan_history">
+        <action
+            android:id="@+id/action_scanHistoryFragment_to_scanResultsFragment"
+            app:destination="@id/scanResultsFragment" />
+    </fragment>
 
     <!--Global action(??) ginagamit ng Logout kahit saan -->
     <action

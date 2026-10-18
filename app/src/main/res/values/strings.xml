@@ -157,6 +157,21 @@
     <string name="Details">DETAILS</string>
     <string name="Not_Set">Not set</string>
     <string name="Edit_Profile">Edit profile</string>
+    <string name="Change_Password">Change password</string>
+    <string name="Current_Password">Current Password</string>
+    <string name="New_Password">New Password</string>
+    <string name="Confirm_New_Password">Confirm New Password</string>
+    <string name="Current_Password_hint">Enter current password</string>
+    <string name="New_Password_hint">At least 8 characters</string>
+    <string name="Password_Updated">Password updated successfully</string>
+    <string name="Profile_Updated">Profile updated successfully</string>
+    <string name="Save_Changes">Save Changes</string>
+    <string name="Cancel">Cancel</string>
+    <string name="My_Scans">My scans</string>
+    <string name="Contact">Contact number</string>
+    <string name="Coordinates">Farm coordinates</string>
+    <string name="Updating_Profile">Updating profile…</string>
+    <string name="Updating_Password">Updating password…</string>
     <string name="Logout">Log out</string>
 
     <!--Drawer-->
