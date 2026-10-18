@@ -98,6 +98,9 @@
 
     <!--Alerts-->
     <string name="Alerts_Sub">Notification module — risk alerts for your plots</string>
+    <string name="Filter_Unread_Only">Unread only</string>
+    <string name="No_Alerts_Found">No alerts to display</string>
+    <string name="No_Unread_Alerts">You have no unread alerts</string>
 
     <!--Encyclopedia-->
     <string name="Encyclopedia">Encyclopedia</string>

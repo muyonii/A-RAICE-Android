@@ -161,6 +161,23 @@ class MainActivity : AppCompatActivity() {
         bindDrawer(FLogin.getCurrentRole() == Role.ADMIN)
     }
 
+    fun setAlertsUnreadCount(count: Int) {
+        runOnUiThread {
+            val userNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            val adminNav = findViewById<BottomNavigationView>(R.id.bottom_navigation_ad)
+            val isAdmin = FLogin.getCurrentRole() == Role.ADMIN
+            val targetNav = if (isAdmin) adminNav else userNav
+            val itemId = if (isAdmin) R.id.adnotif else R.id.notif
+            if (count > 0) {
+                val badge = targetNav.getOrCreateBadge(itemId)
+                badge.isVisible = true
+                badge.number = count
+            } else {
+                targetNav.removeBadge(itemId)
+            }
+        }
+    }
+
     // fills the drawer's account row from the logged-in user
     private fun bindDrawer(isAdmin: Boolean) {
         val name = FLogin.getCurrentName() ?: getString(R.string.Not_Set)

@@ -4,6 +4,7 @@ import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +31,19 @@ class AlertAdapter(
             b.alertDot.backgroundTintList =
                 ColorStateList.valueOf(ContextCompat.getColor(b.root.context, colorRes))
 
+            // Unread indicator: unread alerts have full opacity and prominent dot
+            b.alertDot.isVisible = item.unread
+            b.alertTitle.alpha = if (item.unread) 1.0f else 0.7f
+            b.alertTime.alpha = if (item.unread) 1.0f else 0.7f
+
+            b.root.strokeColor = ContextCompat.getColor(
+                b.root.context,
+                if (item.unread) R.color.gold else R.color.stroke_default
+            )
+
+            b.root.setOnClickListener {
+                onClick?.invoke(item)
+            }
         }
     }
 

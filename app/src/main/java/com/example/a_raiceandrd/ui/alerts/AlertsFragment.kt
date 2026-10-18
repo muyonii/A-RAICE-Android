@@ -1,26 +1,28 @@
 package com.example.a_raiceandrd.ui.alerts
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
+import androidx.core.view.isVisible
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.a_raiceandrd.MainActivity
 import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.adapter.AlertAdapter
+import com.example.a_raiceandrd.data.repository.api.ApiClient
+import com.example.a_raiceandrd.data.repository.api.ApiService
 import com.example.a_raiceandrd.databinding.FragmentAlertsBinding
 import com.example.a_raiceandrd.model.AlertItem
-import com.example.a_raiceandrd.data.repository.api.ApiService
-import com.example.a_raiceandrd.data.repository.api.ApiClient
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import androidx.lifecycle.Lifecycle
-import kotlinx.coroutines.isActive
-import com.example.a_raiceandrd.util.toAlertItem
-import android.util.Log
-import androidx.core.widget.NestedScrollView
 import com.example.a_raiceandrd.ui.setupTopBar
-import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.delay
 import com.example.a_raiceandrd.ui.showNav
+import com.example.a_raiceandrd.util.toAlertItem
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class AlertsFragment : Fragment(R.layout.fragment_alerts) {
 
@@ -28,7 +30,16 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
     private val binding get() = _binding!!
 
     private lateinit var api: ApiService
-    private val adapter = AlertAdapter { markRead(it) }
+    private val alertList = mutableListOf<AlertItem>()
+
+    private var unreadOnly: Boolean = false
+    private var currentPage: Int = 1
+    private var lastPage: Int = 1
+    private var isLoading: Boolean = false
+
+    private val adapter = AlertAdapter { item ->
+        markRead(item)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -38,36 +49,140 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
         setupTopBar(view, view.findViewById<NestedScrollView>(R.id.alertsScroll))
 
         binding.rvAlerts.adapter = adapter
-        adapter.submitList(lastItems)   // show the last known list instantly
 
-        // Refresh when the screen opens, then every 30s while it is visible.
+        binding.swipeRefresh.setColorSchemeResources(R.color.gold)
+        binding.swipeRefresh.setOnRefreshListener {
+            loadAlerts(reset = true)
+        }
+
+        binding.chipUnreadOnly.setOnCheckedChangeListener { _, isChecked ->
+            unreadOnly = isChecked
+            loadAlerts(reset = true)
+        }
+
+        binding.alertsScroll.setOnScrollChangeListener(
+            NestedScrollView.OnScrollChangeListener { v, _, scrollY, _, _ ->
+                if (scrollY >= (v.getChildAt(0).measuredHeight - v.measuredHeight - 300)) {
+                    if (!isLoading && currentPage < lastPage) {
+                        loadAlerts(reset = false)
+                    }
+                }
+            }
+        )
+
+        // Show cached items if any
+        if (alertList.isNotEmpty()) {
+            adapter.submitList(alertList.toList())
+        }
+
+        // Refresh on open and every 60 seconds while visible
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (isActive) {
-                    refresh()
+                    loadAlerts(reset = true)
                     delay(POLL_MS)
                 }
             }
         }
     }
 
-    private suspend fun refresh() {
-        try {
-            val items = api.getAlerts().data.orEmpty().map { it.toAlertItem() }
-            if (_binding != null) adapter.submitList(items)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "load alerts failed", e)   // 401 = token expired -> back to log in
+    override fun onResume() {
+        super.onResume()
+        loadAlerts(reset = true)
+    }
+
+    private fun loadAlerts(reset: Boolean) {
+        if (isLoading) return
+        isLoading = true
+
+        val pageToLoad = if (reset) 1 else currentPage + 1
+
+        if (!reset) {
+            binding.loadingMoreProgress.isVisible = true
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val unreadParam = if (unreadOnly) 1 else null
+                val resp = api.getAlerts(unread = unreadParam, page = pageToLoad)
+
+                currentPage = resp.currentPage ?: pageToLoad
+                lastPage = resp.lastPage ?: 1
+
+                val newItems = resp.data.orEmpty().map { it.toAlertItem() }
+
+                if (reset) {
+                    alertList.clear()
+                    alertList.addAll(newItems)
+                } else {
+                    alertList.addAll(newItems)
+                }
+
+                adapter.submitList(alertList.toList())
+
+                // Update unread count badge
+                if (unreadOnly) {
+                    val unreadCount = resp.total ?: 0
+                    (activity as? MainActivity)?.setAlertsUnreadCount(unreadCount)
+                } else {
+                    // Update badge from dedicated unread query
+                    updateBadgeAsync()
+                }
+
+                updateEmptyState()
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load alerts", e)
+            } finally {
+                isLoading = false
+                _binding?.let {
+                    it.swipeRefresh.isRefreshing = false
+                    it.loadingMoreProgress.isVisible = false
+                }
+            }
+        }
+    }
+
+    private fun updateBadgeAsync() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val unreadResp = api.getAlerts(unread = 1, page = 1)
+                val unreadTotal = unreadResp.total ?: 0
+                (activity as? MainActivity)?.setAlertsUnreadCount(unreadTotal)
+            } catch (e: Exception) {
+                // Ignore badge update failure
+            }
+        }
+    }
+
+    private fun updateEmptyState() {
+        val b = _binding ?: return
+        val isEmpty = alertList.isEmpty()
+        b.emptyAlertsState.isVisible = isEmpty
+        b.rvAlerts.isVisible = !isEmpty
+        if (isEmpty) {
+            b.tvEmptyAlerts.setText(
+                if (unreadOnly) R.string.No_Unread_Alerts else R.string.No_Alerts_Found
+            )
         }
     }
 
     private fun markRead(item: AlertItem) {
         if (!item.unread) return
+
+        // Optimistically mark as read in local list
+        val idx = alertList.indexOfFirst { it.id == item.id }
+        if (idx != -1) {
+            alertList[idx] = item.copy(unread = false)
+            adapter.submitList(alertList.toList())
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 api.markAlertRead(item.id.toInt())
-                refresh()
+                updateBadgeAsync()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -83,8 +198,7 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
     }
 
     private companion object {
-        var lastItems: List<AlertItem> = emptyList()   // in-memory cache
         const val TAG = "AlertsFragment"
-        const val POLL_MS = 30_000L
+        const val POLL_MS = 60_000L
     }
 }
