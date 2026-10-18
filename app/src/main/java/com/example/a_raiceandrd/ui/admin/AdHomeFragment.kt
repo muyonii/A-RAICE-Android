@@ -63,6 +63,10 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
             findNavController().navigate(R.id.action_adhome_to_scanHistoryFragment)
         }
 
+        view.findViewById<View>(R.id.cardFarmers).setOnClickListener {
+            FarmerRecordsDialog.show(requireContext())
+        }
+
         // Data: draw whatever the ViewModel provides
         viewModel = ViewModelProvider(this)[AdHomeViewModel::class.java]
         val periodBtn = view.findViewById<MaterialButton>(R.id.btnPeriod)

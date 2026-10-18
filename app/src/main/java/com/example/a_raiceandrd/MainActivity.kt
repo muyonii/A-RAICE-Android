@@ -88,12 +88,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // drawer items that don't have a screen yet
-        val soon = View.OnClickListener {
-            Toast.makeText(this, R.string.Drawer_Soon, Toast.LENGTH_SHORT).show()
+        findViewById<View>(R.id.drawerFarmerRecords).setOnClickListener {
+            drawer.closeDrawer(GravityCompat.START)
+            com.example.a_raiceandrd.ui.admin.FarmerRecordsDialog.show(this)
         }
-        findViewById<View>(R.id.drawerFarmerRecords).setOnClickListener(soon)
-        findViewById<View>(R.id.drawerResources).setOnClickListener(soon)
         findViewById<View>(R.id.drawerAccountSettings).setOnClickListener {
             drawer.closeDrawer(GravityCompat.START)
             navController.navigate(R.id.profile)
@@ -191,7 +189,6 @@ class MainActivity : AppCompatActivity() {
         val workspace = if (isAdmin) View.VISIBLE else View.GONE
         findViewById<View>(R.id.drawerWorkspaceLabel).visibility = workspace
         findViewById<View>(R.id.drawerFarmerRecords).visibility = workspace
-        findViewById<View>(R.id.drawerResources).visibility = workspace
 
         // farmers open their Profile (details, edit) from the account row; admins just see their name
         val row = findViewById<View>(R.id.drawerProfileRow)
