@@ -156,6 +156,21 @@
     <string name="Medium">Medium</string>
     <string name="Low">Low</string>
     <string name="Ad_HPots">MUNICIPALITY HOTSPOTS</string>
+    <string name="Ad_Outbreak_History">Outbreak History</string>
+    <string name="Ad_Hotspots_Toggle">Hotspots</string>
+    <string name="Ad_History_Toggle">History</string>
+    <string name="Filter_Active">Active</string>
+    <string name="Filter_Resolved">Resolved</string>
+    <string name="Mark_As_Resolved">Mark as resolved</string>
+    <string name="Confirm_Resolve_Title">Resolve Outbreak</string>
+    <string name="Confirm_Resolve_Msg">Are you sure you want to resolve this outbreak in %1$s?</string>
+    <string name="Resolve_Success">Outbreak marked as resolved.</string>
+    <string name="Resolve_Conflict">This outbreak has already been resolved.</string>
+    <string name="Resolve_Error">Failed to resolve outbreak.</string>
+    <string name="Farm_Details">Farm Information</string>
+    <string name="Tap_To_Call">Call Farmer: %1$s</string>
+    <string name="No_Outbreaks_In_Area">No active outbreaks reported in %1$s</string>
+    <string name="Selected_Area">Selected: %1$s</string>
 
     <!--Ad Reports-->
     <string name="AdReport">Reports</string>

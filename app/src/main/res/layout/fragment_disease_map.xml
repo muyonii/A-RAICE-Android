@@ -66,13 +66,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/DMap_Sub">
 
-            <!-- Map goes here. Attach it in code:
-                 childFragmentManager.beginTransaction()
-                     .replace(R.id.map_fragment_host, YourMapFragment())
-                     .commit() -->
-
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/map_fragment_host"
+            <com.example.a_raiceandrd.ui.map.BataanMapView
+                android:id="@+id/bataanMapView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
         </FrameLayout>
@@ -171,12 +166,30 @@
             app:strokeColor="@color/stroke_default"
             app:strokeWidth="1dp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvNearby"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:overScrollMode="never"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNoOutbreaks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="20dp"
+                    android:textAlignment="center"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/manrope_regular"
+                    android:visibility="gone"
+                    tools:text="No active outbreaks reported in Balanga" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvNearby"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:overScrollMode="never"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 

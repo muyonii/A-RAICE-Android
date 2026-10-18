@@ -1,60 +1,312 @@
 package com.example.a_raiceandrd.ui.map
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.view.isVisible
+import androidx.core.widget.NestedScrollView
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.a_raiceandrd.R
+import com.example.a_raiceandrd.adapter.OutbreakAdapter
+import com.example.a_raiceandrd.adapter.OutbreakItem
+import com.example.a_raiceandrd.data.repository.api.ApiClient
+import com.example.a_raiceandrd.data.repository.api.MapFarmDto
+import com.example.a_raiceandrd.data.repository.api.MapOutbreakDto
+import com.example.a_raiceandrd.data.repository.api.MapResponseDto
+import com.example.a_raiceandrd.databinding.FragmentProvinceMapBinding
+import com.example.a_raiceandrd.ui.setupTopBar
+import com.example.a_raiceandrd.ui.showAdminNav
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.util.Locale
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
+class ProvinceMap : Fragment(R.layout.fragment_province_map) {
 
-/**
- * A simple [Fragment] subclass.
- * Use the [ProvinceMap.newInstance] factory method to
- * create an instance of this fragment.
- */
-class ProvinceMap : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var _b: FragmentProvinceMapBinding? = null
+    private val b get() = _b!!
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    private var currentMapData: MapResponseDto? = null
+    private var isHistoryMode = false
+    private var historyStatusFilter: String? = null
+
+    private val outbreakAdapter = OutbreakAdapter { item ->
+        showOutbreakDetailDialog(item)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        _b = FragmentProvinceMapBinding.bind(view)
+
+        setupTopBar(view, view.findViewById<NestedScrollView>(R.id.adMapScroll))
+
+        b.adBataanMapView.isFarmerMode = false
+        b.rvAdnearby.layoutManager = LinearLayoutManager(requireContext())
+        b.rvAdnearby.adapter = outbreakAdapter
+
+        // Farm dot tap
+        b.adBataanMapView.onFarmSelected = { farm ->
+            showFarmDetails(farm)
+        }
+
+        b.btnCloseFarmDetails.setOnClickListener {
+            b.cardFarmDetails.isVisible = false
+        }
+
+        // Municipality polygon tap
+        b.adBataanMapView.onMunicipalitySelected = { slug ->
+            if (!isHistoryMode) {
+                filterHotspotsByMunicipality(slug)
+            }
+        }
+
+        // Mode toggles
+        b.toggleMode.check(R.id.btnModeHotspots)
+        b.toggleMode.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                when (checkedId) {
+                    R.id.btnModeHotspots -> {
+                        isHistoryMode = false
+                        b.historyFilterGroup.isVisible = false
+                        b.adnearbyLabel.setText(R.string.Ad_HPots)
+                        displayHotspots()
+                    }
+                    R.id.btnModeHistory -> {
+                        isHistoryMode = true
+                        b.historyFilterGroup.isVisible = true
+                        b.adnearbyLabel.setText(R.string.Ad_Outbreak_History)
+                        loadOutbreakHistory()
+                    }
+                }
+            }
+        }
+
+        // History filter chips
+        b.historyFilterGroup.check(R.id.chipFilterAll)
+        b.chipFilterAll.setOnClickListener {
+            historyStatusFilter = null
+            loadOutbreakHistory()
+        }
+        b.chipFilterActive.setOnClickListener {
+            historyStatusFilter = "active"
+            loadOutbreakHistory()
+        }
+        b.chipFilterResolved.setOnClickListener {
+            historyStatusFilter = "resolved"
+            loadOutbreakHistory()
+        }
+
+        loadMapData()
+    }
+
+    private fun loadMapData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val mapResp = ApiClient.service.getMap()
+                currentMapData = mapResp
+
+                val severities = mutableMapOf<String, String?>()
+                mapResp.municipalities.orEmpty().forEach { m ->
+                    m.slug?.let { s -> severities[s.lowercase(Locale.ROOT)] = m.severity }
+                }
+                b.adBataanMapView.setSeverities(severities)
+                b.adBataanMapView.setFarms(mapResp.farms.orEmpty())
+
+                if (!isHistoryMode) {
+                    displayHotspots()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), e.message ?: "Failed to load map data", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_province_map, container, false)
+    private fun displayHotspots() {
+        val outbreaks = currentMapData?.outbreaks.orEmpty()
+        val sorted = outbreaks.sortedWith(
+            compareByDescending<MapOutbreakDto> { severityRank(it.severity) }
+                .thenByDescending { it.createdAt.orEmpty() }
+        )
+
+        val items = sorted.map { o ->
+            OutbreakItem(
+                id = o.id,
+                diseaseName = o.disease,
+                municipality = o.municipality,
+                severity = o.severity,
+                status = "Active",
+                createdAt = o.createdAt
+            )
+        }
+
+        outbreakAdapter.submitList(items)
+        b.tvAdNoOutbreaks.isVisible = items.isEmpty()
+        b.rvAdnearby.isVisible = items.isNotEmpty()
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment ProvinceMap.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            ProvinceMap().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+    private fun filterHotspotsByMunicipality(slug: String?) {
+        val outbreaks = currentMapData?.outbreaks.orEmpty()
+        val target = slug?.lowercase(Locale.ROOT)
+        val filtered = if (target.isNullOrBlank()) {
+            outbreaks
+        } else {
+            outbreaks.filter { it.municipality?.lowercase(Locale.ROOT) == target }
+        }
+
+        val sorted = filtered.sortedWith(
+            compareByDescending<MapOutbreakDto> { severityRank(it.severity) }
+                .thenByDescending { it.createdAt.orEmpty() }
+        )
+
+        val items = sorted.map { o ->
+            OutbreakItem(
+                id = o.id,
+                diseaseName = o.disease,
+                municipality = o.municipality,
+                severity = o.severity,
+                status = "Active",
+                createdAt = o.createdAt
+            )
+        }
+
+        outbreakAdapter.submitList(items)
+        b.tvAdNoOutbreaks.isVisible = items.isEmpty()
+        b.rvAdnearby.isVisible = items.isNotEmpty()
+    }
+
+    private fun loadOutbreakHistory() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val page = ApiClient.service.getOutbreaks(page = 1, status = historyStatusFilter)
+                val items = page.data.orEmpty().map { o ->
+                    OutbreakItem(
+                        id = o.id,
+                        diseaseName = o.disease?.name,
+                        municipality = o.municipality,
+                        severity = o.severity,
+                        status = o.status,
+                        createdAt = o.createdAt,
+                        scansCount = o.scansCount
+                    )
                 }
+                outbreakAdapter.submitList(items)
+                b.tvAdNoOutbreaks.isVisible = items.isEmpty()
+                b.rvAdnearby.isVisible = items.isNotEmpty()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Failed to load outbreak history", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun showFarmDetails(farm: MapFarmDto) {
+        b.cardFarmDetails.isVisible = true
+
+        val farmerName = farm.farmer?.name ?: "Unknown Farmer"
+        b.tvFarmFarmerName.text = farmerName
+
+        val loc = listOfNotNull(
+            farm.barangay?.let { "Brgy. $it" },
+            farm.municipality?.replaceFirstChar { it.uppercase() }
+        ).joinToString(", ")
+        b.tvFarmLocation.text = if (loc.isNotBlank()) loc else "Location not specified"
+
+        val scan = farm.scan
+        if (scan != null) {
+            val dName = scan.disease ?: getString(R.string.Badge_Healthy)
+            val dDate = scan.scanDate?.take(10) ?: ""
+            b.tvFarmLastScan.text = "Last Scan: $dName · $dDate"
+        } else {
+            b.tvFarmLastScan.text = "No scan records"
+        }
+
+        val phone = farm.farmer?.contactNumber
+        if (!phone.isNullOrBlank()) {
+            b.btnCallFarmer.isVisible = true
+            b.btnCallFarmer.text = getString(R.string.Tap_To_Call, phone)
+            b.btnCallFarmer.setOnClickListener {
+                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                startActivity(intent)
+            }
+        } else {
+            b.btnCallFarmer.isVisible = false
+        }
+    }
+
+    private fun showOutbreakDetailDialog(item: OutbreakItem) {
+        val isResolved = item.status.equals("resolved", ignoreCase = true)
+        val muni = item.municipality?.replaceFirstChar { it.uppercase() } ?: "Unknown"
+
+        val msg = StringBuilder()
+            .append("Municipality: $muni\n")
+            .append("Severity: ${item.severity?.uppercase(Locale.ROOT) ?: "N/A"}\n")
+            .append("Status: ${item.status?.uppercase(Locale.ROOT) ?: "ACTIVE"}\n")
+            .append("Reported: ${item.createdAt?.take(10) ?: "N/A"}")
+
+        item.scansCount?.let {
+            msg.append("\nAssociated Scans: $it")
+        }
+
+        val builder = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(item.diseaseName ?: "Outbreak Details")
+            .setMessage(msg.toString())
+            .setNegativeButton(R.string.Close, null)
+
+        if (!isResolved && item.id != null) {
+            builder.setPositiveButton(R.string.Mark_As_Resolved) { _, _ ->
+                confirmResolveOutbreak(item.id, muni)
+            }
+        }
+
+        builder.show()
+    }
+
+    private fun confirmResolveOutbreak(outbreakId: Int, municipalityName: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.Confirm_Resolve_Title)
+            .setMessage(getString(R.string.Confirm_Resolve_Msg, municipalityName))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.Mark_As_Resolved) { _, _ ->
+                executeResolveOutbreak(outbreakId)
+            }
+            .show()
+    }
+
+    private fun executeResolveOutbreak(outbreakId: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                ApiClient.service.closeOutbreak(outbreakId)
+                Toast.makeText(requireContext(), R.string.Resolve_Success, Toast.LENGTH_SHORT).show()
+                // Refresh data
+                loadMapData()
+                if (isHistoryMode) {
+                    loadOutbreakHistory()
+                }
+            } catch (e: HttpException) {
+                if (e.code() == 409) {
+                    Toast.makeText(requireContext(), R.string.Resolve_Conflict, Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), R.string.Resolve_Error, Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), R.string.Resolve_Error, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun severityRank(severity: String?): Int = when (severity?.lowercase(Locale.ROOT)) {
+        "high" -> 3
+        "medium" -> 2
+        "low" -> 1
+        else -> 0
+    }
+
+    override fun onDestroyView() {
+        requireView().showAdminNav()
+        super.onDestroyView()
+        _b = null
     }
 }

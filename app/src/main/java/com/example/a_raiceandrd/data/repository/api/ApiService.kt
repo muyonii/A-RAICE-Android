@@ -83,7 +83,8 @@ interface ApiService {
     // STAFF ONLY
     @GET("outbreaks")
     suspend fun getOutbreaks(
-        @Query("page") page: Int? = null
+        @Query("page") page: Int? = null,
+        @Query("status") status: String? = null
     ): Page<OutbreakDto>
 
     @GET("outbreaks/{id}")
