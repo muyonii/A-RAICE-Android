@@ -189,21 +189,39 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <TextView
-            android:id="@+id/recentAct"
+        <LinearLayout
+            android:id="@+id/llRecentHeader"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
             android:layout_marginEnd="24dp"
             android:layout_marginStart="24dp"
-            android:letterSpacing="0.13"
-            android:text="@string/Recent_act"
-            android:fontFamily="@font/jetbrainsmono_regular"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/notifCard" />
+            app:layout_constraintTop_toBottomOf="@id/notifCard">
+
+            <TextView
+                android:id="@+id/recentAct"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:letterSpacing="0.13"
+                android:text="@string/Recent_act"
+                android:fontFamily="@font/jetbrainsmono_regular"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvViewAllHistory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/manrope_bold"
+                android:text="@string/View_All"
+                android:textColor="@color/gold"
+                android:textSize="13sp" />
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/activityCard"
@@ -221,7 +239,7 @@
             app:strokeWidth="1dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/recentAct">
+            app:layout_constraintTop_toBottomOf="@id/llRecentHeader">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/activityList"

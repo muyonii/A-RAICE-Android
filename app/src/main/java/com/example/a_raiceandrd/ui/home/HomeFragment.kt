@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.adapter.ActivityAdapter
@@ -40,7 +41,17 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private var _b: FragmentHomeBinding? = null
     private val b get() = _b!!
-    private val adapter = ActivityAdapter()
+    private val adapter = ActivityAdapter { item ->
+        if (item.id.startsWith("scan-")) {
+            val scanId = item.id.removePrefix("scan-").toIntOrNull()
+            if (scanId != null && scanId > 0) {
+                val args = Bundle().apply { putInt("scanId", scanId) }
+                findNavController().navigate(R.id.action_home_to_scanResultsFragment, args)
+            }
+        } else if (item.id.startsWith("alert-")) {
+            findNavController().navigate(R.id.notif)
+        }
+    }
     private lateinit var api: ApiService
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,6 +61,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         api = ApiClient.service
 
         setupTopBar(view, view.findViewById<NestedScrollView>(R.id.homeScroll))
+
+        b.tvViewAllHistory.setOnClickListener {
+            findNavController().navigate(R.id.action_home_to_scanHistoryFragment)
+        }
 
         b.activityList.layoutManager = LinearLayoutManager(requireContext())
         b.activityList.adapter = adapter

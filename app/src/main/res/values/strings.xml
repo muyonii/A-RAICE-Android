@@ -88,6 +88,13 @@
     <string name="Linked_Outbreak_Note">⚠ Associated with an active outbreak in this area.</string>
     <string name="Scan_Failed">Diagnosis failed. The leaf could not be classified.</string>
     <string name="Retry">Retry Scan</string>
+    <string name="Scan_History">Scan History</string>
+    <string name="All_Scans">All Field Scans</string>
+    <string name="No_Scans_Found">No scan records found</string>
+    <string name="No_Scans_Sub">Recorded scans will appear here.</string>
+    <string name="Filter_All_Municipalities">All Municipalities</string>
+    <string name="Filter_All_Diseases">All Diseases</string>
+    <string name="View_All">View all →</string>
 
     <!--Alerts-->
     <string name="Alerts_Sub">Notification module — risk alerts for your plots</string>

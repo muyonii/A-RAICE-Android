@@ -31,6 +31,7 @@ object AdminRepo {
 
         val recent = scans.sortedByDescending { it.id }.take(4).map {
             RecentScan(
+                id = it.id,
                 disease = it.disease?.name,
                 farmer = it.farmer?.name ?: "Unknown farmer",
                 confidence = ((it.confidence ?: 0.0) * 100).toInt(),

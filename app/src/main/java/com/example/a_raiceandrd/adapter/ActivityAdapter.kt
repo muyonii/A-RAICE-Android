@@ -12,31 +12,35 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.ui.home.ActivityItem
 
-class ActivityAdapter : ListAdapter<ActivityItem, ActivityAdapter.VH>(Diff) {
+class ActivityAdapter(
+    private val onItemClick: ((ActivityItem) -> Unit)? = null
+) : ListAdapter<ActivityItem, ActivityAdapter.VH>(Diff) {
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val dot: View = view.findViewById(R.id.alertDot)
-            val title: TextView = view.findViewById(R.id.alertTitle)
-            val time: TextView = view.findViewById(R.id.alertTime)
-        }
+    class VH(val view: View) : RecyclerView.ViewHolder(view) {
+        val dot: View = view.findViewById(R.id.alertDot)
+        val title: TextView = view.findViewById(R.id.alertTitle)
+        val time: TextView = view.findViewById(R.id.alertTime)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        // flat row layout (the card + dividers in fragment_home.xml)
         val v = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_recent_act, parent, false)
         return VH(v)
     }
 
-        override fun onBindViewHolder(holder: VH, position: Int) {
-            val item = getItem(position)
-            holder.title.text = item.title
-            holder.time.text = item.timeAgo.uppercase()
-            holder.dot.background = GradientDrawable().apply {
-                shape = GradientDrawable.OVAL
-                setColor(ContextCompat.getColor(holder.itemView.context, item.type.color))
-            }
-
+    override fun onBindViewHolder(holder: VH, position: Int) {
+        val item = getItem(position)
+        holder.title.text = item.title
+        holder.time.text = item.timeAgo.uppercase()
+        holder.dot.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(ContextCompat.getColor(holder.itemView.context, item.type.color))
         }
+
+        holder.view.setOnClickListener {
+            onItemClick?.invoke(item)
+        }
+    }
 
     object Diff : DiffUtil.ItemCallback<ActivityItem>() {
         override fun areItemsTheSame(a: ActivityItem, b: ActivityItem) =

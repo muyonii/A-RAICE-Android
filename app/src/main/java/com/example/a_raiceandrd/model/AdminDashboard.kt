@@ -14,6 +14,7 @@ data class AdminDashboard(
 )
 
 data class RecentScan(
+    val id: Int? = null,
     val disease: String?,
     val farmer: String,
     val confidence: Int,

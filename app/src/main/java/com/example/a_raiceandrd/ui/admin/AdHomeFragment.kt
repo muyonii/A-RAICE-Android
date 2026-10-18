@@ -60,7 +60,7 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
         }
 
         view.findViewById<View>(R.id.btnViewAllScans).setOnClickListener {
-            Toast.makeText(requireContext(), R.string.Scans_Soon, Toast.LENGTH_SHORT).show()
+            findNavController().navigate(R.id.action_adhome_to_scanHistoryFragment)
         }
 
         // Data: draw whatever the ViewModel provides
@@ -186,6 +186,13 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
                 setText(look.label)
                 setTextColor(ContextCompat.getColor(ctx, look.badgeText))
                 backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(ctx, look.badgeBg))
+            }
+
+            row.setOnClickListener {
+                scan.id?.let { scanId ->
+                    val bundle = Bundle().apply { putInt("scanId", scanId) }
+                    findNavController().navigate(R.id.action_adhome_to_scanResultsFragment, bundle)
+                }
             }
 
             rows.addView(row)
