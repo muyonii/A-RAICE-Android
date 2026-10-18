@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    private const val BASE_URL = "https://a-raice-web-production-be92.up.railway.app/"
+    private const val BASE_URL = "https://a-raice-web-production-be92.up.railway.app/api/"
 
     @Volatile
     var token: String? = null
