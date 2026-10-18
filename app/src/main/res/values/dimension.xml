@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--for screen padding-->
+    <dimen name="screen_padding_H">24dp</dimen>
+    <!--for scrolling content—para hindi matago sa nav bar -->
+    <dimen name="nav_clearance">120dp</dimen>
+    <dimen name="nav_side_margin">20dp</dimen>
+    <dimen name="nav_max_width">420dp</dimen>
+    <dimen name="logo_size">96dp</dimen>
+    <dimen name="logo_header_size">40dp</dimen>
+    <dimen name="avatar_size">40dp</dimen>
+</resources>

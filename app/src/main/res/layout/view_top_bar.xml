@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/paddy_950"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="10dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/menuBtn"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/paddy_800"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/paddy_line"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/Drawer_Menu"
+            android:src="@drawable/ic_menu"
+            app:tint="@color/gold_bright" />
+    </com.google.android.material.card.MaterialCardView>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_weight="1" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/notifBtn"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:cardBackgroundColor="@color/paddy_800"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/paddy_line"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/Alerts"
+            android:src="@drawable/ic_bell"
+            app:tint="@color/gold_bright" />
+    </com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>

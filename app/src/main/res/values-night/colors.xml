@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme: override ONLY palette values.
+         Semantic roles (bg_screen, surface_card, ...) live in values/colors.xml
+         and pick these up automatically.
+         Names not listed here (rust_bright, green_bright, *_deep, cream)
+         fall back to values/colors.xml. -->
+
+    <!--Paddy (neutrals)-->
+    <color name="paddy_950">#10201A</color>
+    <color name="paddy_900">#16281F</color>
+    <color name="paddy_800">#1E362A</color>
+    <color name="paddy_700">#2A4A38</color>
+    <color name="paddy_line">#3A5A45</color>
+
+    <!--Husk (text)-->
+    <color name="husk">#EFE7D3</color>
+    <color name="husk_dim">#C9C0A9</color>
+
+    <!--Gold-->
+    <color name="gold">#D8A427</color>
+    <color name="gold_dim">#B8994A</color>       <!-- estimated -->
+    <color name="gold_bright">#F0BE55</color>    <!-- estimated -->
+
+    <!--Status-->
+    <color name="rust">#B24A2F</color>
+    <color name="sky">#5D93A0</color>
+    <color name="ok_green">#7DA860</color>
+
+    <!-- Fixed tones -->
+    <color name="ink">#0A1410</color>            <!-- darker than bg so map/camera still stand out; estimated -->
+    <color name="cream">#EFE7D3</color>
+
+</resources>

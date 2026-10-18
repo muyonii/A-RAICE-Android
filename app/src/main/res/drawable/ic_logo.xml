@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--PLACEHOLDER para mag-compile and layouts na nagp-point dito,
+    so that swapping sa actual logo won't touch anything -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <path
+        android:fillColor="#A8760B"
+        android:pathData="M48,48m-44,0a44,44 0,1 1,88 0a44,44 0,1 1,-88 0" />
+    <path
+        android:fillColor="#F3EEDF"
+        android:pathData="M48,20C60,32 60,46 48,58C36,46 36,32 48,20Z" />
+    <path
+        android:fillColor="#F3EEDF"
+        android:pathData="M46.5,56H49.5V76H46.5Z" />
+</vector>

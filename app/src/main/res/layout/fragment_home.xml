@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.home.HomeFragment">
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/homeScroll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none" >
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <View
+            android:id="@+id/topSpacer"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/userLoc"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginTop="12dp"
+                android:letterSpacing="0.13"
+                android:fontFamily="@font/jetbrainsmono_regular"
+                android:textColor="@color/text_eyebrow"
+                android:textSize="11sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/topSpacer"
+                tools:text="BARANGAY IBABA, ORANI" />
+
+            <TextView
+                android:id="@+id/greetingText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:fontFamily="@font/spacegrotesk_bold"
+                android:textColor="@color/text_primary"
+                android:textSize="28sp"
+                app:layout_constraintStart_toStartOf="@id/userLoc"
+                app:layout_constraintEnd_toEndOf="@id/userLoc"
+                app:layout_constraintTop_toBottomOf="@id/userLoc"
+                tools:text="Kumusta, Juan Dela Cruz" />
+
+            <TextView
+                android:id="@+id/homeSub"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/manrope_regular"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginTop="1dp"
+                android:text="@string/homeSub"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/greetingText"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/notifCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="20dp"
+            app:cardUseCompatPadding="false"
+            app:cardPreventCornerOverlap="false"
+            app:contentPadding="16dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/stroke_default"
+            app:strokeWidth="1dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/homeSub">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="105dp"
+                android:layout_height="105dp">
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:id="@+id/riskRing"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:progress="80"
+                    app:indicatorColor="@color/rust"
+                    app:indicatorSize="105dp"
+                    app:indicatorInset="0dp"
+                    app:indicatorTrackGapSize="0dp"
+                    app:trackColor="@color/paddy_950"
+                    app:trackCornerRadius="8dp"
+                    app:trackThickness="11dp"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <TextView
+                    android:id="@+id/riskLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/risk_high"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toTopOf="@id/barangayRisk"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintVertical_chainStyle="packed"
+                    tools:text="HIGH" />
+
+                <TextView
+                    android:id="@+id/barangayRisk"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="24dp"
+                    android:fontFamily="@font/jetbrainsmono_regular"
+                    android:letterSpacing="0.1"
+                    android:text="@string/Risk_barangay"
+                    android:textAlignment="center"
+                    android:textColor="@color/husk_dim"
+                    android:textSize="9sp"
+                    app:layout_constraintTop_toBottomOf="@id/riskLabel"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/notifTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.15"
+                    android:fontFamily="@font/jetbrainsmono_regular"
+                    android:text="@string/Notif_module"
+                    android:textColor="@color/text_eyebrow"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/notifTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/spacegrotesk_bold"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    tools:text="Bacterial Leaf Blight active nearby" />
+
+                <TextView
+                    android:id="@+id/notifBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="@font/manrope"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    tools:text="3 confirmed cases in Barangay Ibaba this week." />
+            </LinearLayout>
+        </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/recentAct"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginStart="24dp"
+            android:letterSpacing="0.13"
+            android:text="@string/Recent_act"
+            android:fontFamily="@font/jetbrainsmono_regular"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/notifCard" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/activityCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="24dp"
+            app:cardBackgroundColor="@color/surface_card"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:cardPreventCornerOverlap="false"
+            app:cardUseCompatPadding="false"
+            app:strokeColor="@color/stroke_default"
+            app:strokeWidth="1dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/recentAct">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/activityList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:paddingVertical="4dp"
+                android:scrollbars="none"
+                tools:itemCount="4"
+                tools:listitem="@layout/item_recent_act"/>
+
+            <TextView
+                android:id="@+id/activityEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/manrope"
+                android:padding="20dp"
+                android:text="No recent activity yet."
+                android:textAlignment="center"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <include
+        android:id="@+id/topBar"
+        layout="@layout/view_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</FrameLayout>

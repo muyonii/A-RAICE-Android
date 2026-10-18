@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/adhome"
+        android:icon="@drawable/adhome"
+        android:title="@string/Dashb" />
+
+    <item
+        android:id="@+id/admap"
+        android:icon="@drawable/map"
+        android:title="@string/Map" />
+
+    <item
+        android:id="@+id/adreport"
+        android:icon="@drawable/report"
+        android:title="@string/Reports" />
+
+    <item
+        android:id="@+id/adnotif"
+        android:icon="@drawable/alert"
+        android:title="@string/Alerts" />
+</menu>

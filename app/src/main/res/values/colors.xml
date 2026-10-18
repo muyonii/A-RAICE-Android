@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--COLOR PALETTE-->
+
+    <!--Paddy (neutrals)-->
+    <color name="paddy_950">#F3EEDF</color>
+    <color name="paddy_900">#ECE4CD</color>
+    <color name="paddy_800">#FFFFFF</color>
+    <color name="paddy_700">#F1EAD8</color>
+    <color name="paddy_line">#DED2AE</color>
+
+    <!--Husk-->
+    <color name="husk">#1E2E22</color>
+    <color name="husk_dim">#6B7267</color>
+
+    <!--Gold-->
+    <color name="gold">#A8760B</color>
+    <color name="gold_dim">#8A6F2C</color>
+    <color name="gold_bright">#E0A92B</color>
+
+    <!--Status-->
+    <color name="rust">#A8432B</color>
+    <color name="sky">#2E6A76</color>
+    <color name="ok_green">#4F7A3A</color>
+
+    <!--Fixed colors-->
+    <color name="ink">#1E2E22</color>            <!-- always-dark: map, camera, text on gold -->
+    <color name="cream">#F3EEDF</color>          <!-- always-light: text on dark surfaces -->
+    <color name="rust_bright">#E0745C</color>    <!-- badge text -->
+    <color name="green_bright">#8DB874</color>   <!-- badge text -->
+    <color name="gold_deep">#4A3812</color>      <!-- badge bg, text on gold -->
+    <color name="rust_deep">#4A2A20</color>      <!-- badge bg -->
+    <color name="green_deep">#2A3F25</color>     <!-- badge bg -->
+
+    <!---->
+    <!--Backgrounds-->
+    <color name="bg_screen">@color/paddy_950</color>
+    <color name="bg_nav">@color/paddy_950</color>
+
+    <!--Surfaces-->
+    <color name="surface_card">@color/paddy_800</color>
+    <color name="surface_tile">@color/paddy_700</color>
+    <color name="surface_chip">@color/paddy_900</color>
+    <color name="surface_inverse">@color/ink</color>
+
+    <!--Strokes-->
+    <color name="stroke_default">@color/paddy_line</color>
+
+    <!--Text-->
+    <color name="text_primary">@color/husk</color>
+    <color name="text_secondary">@color/husk_dim</color>
+    <color name="text_eyebrow">@color/gold</color>
+    <color name="text_section_label">@color/gold_dim</color>
+    <color name="text_on_inverse">@color/cream</color>
+    <color name="text_on_inverse_muted">@color/husk_dim</color>
+    <color name="text_on_primary">@color/ink</color>
+    <color name="text_on_primary_muted">@color/gold_deep</color>
+
+    <!--Brand-->
+    <color name="primary">@color/gold</color>
+    <color name="primary_bright">@color/gold_bright</color>
+
+    <!--Navigation-->
+    <color name="nav_active">@color/gold</color>
+    <color name="nav_inactive">@color/husk_dim</color>
+
+    <!--Risk levels-->
+    <color name="risk_high">@color/rust</color>
+    <color name="risk_moderate">@color/gold</color>
+    <color name="risk_weather">@color/sky</color>
+    <color name="risk_good">@color/ok_green</color>
+
+    <!--Severity badges-->
+    <color name="badge_high_bg">@color/rust_deep</color>
+    <color name="badge_high_text">@color/rust_bright</color>
+    <color name="badge_moderate_bg">@color/gold_deep</color>
+    <color name="badge_moderate_text">@color/gold_bright</color>
+    <color name="badge_low_bg">@color/green_deep</color>
+    <color name="badge_low_text">@color/green_bright</color>
+
+    <color name="tile_gold">#F3E3B8</color>
+    <color name="tile_rust">#F1D6CF</color>
+    <color name="tile_sky">#D3E3E5</color>
+    <color name="tile_green">#DCE6CC</color>
+
+</resources>

@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.a_raiceandrd.ui.auth.LoginFragment"
+        android:label="fragment_login"
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_loginFragment_to_homeFragment"
+            app:destination="@id/home"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_loginFragment_to_registerFragment"
+            app:destination="@id/registerFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_adHomeFragment"
+            app:destination="@id/adhome"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/registerFragment"
+        android:name="com.example.a_raiceandrd.ui.auth.RegisterFragment"
+        android:label="fragment_register"
+        tools:layout="@layout/fragment_register" >
+        <action
+            android:id="@+id/action_registerFragment_to_home"
+            app:destination="@id/home"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <!--User Fragments-->
+    <fragment
+        android:id="@+id/home"
+        android:name="com.example.a_raiceandrd.ui.home.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/map"
+        android:name="com.example.a_raiceandrd.ui.map.DiseaseMapFragment"
+        android:label="fragment_disease_map"
+        tools:layout="@layout/fragment_disease_map" />
+
+    <fragment
+        android:id="@+id/notif"
+        android:name="com.example.a_raiceandrd.ui.alerts.AlertsFragment"
+        android:label="fragment_alerts"
+        tools:layout="@layout/fragment_alerts" />
+
+    <fragment
+        android:id="@+id/ency"
+        android:name="com.example.a_raiceandrd.ui.encyclopedia.EncyListFragment"
+        android:label="fragment_ency_list"
+        tools:layout="@layout/fragment_ency_list" >
+        <action
+            android:id="@+id/action_ency_to_encyDetailsFragment"
+            app:destination="@id/encyDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/encyDetailsFragment"
+        android:name="com.example.a_raiceandrd.ui.encyclopedia.EncyDetailsFragment"
+        android:label="fragment_ency_details" >
+
+        <argument
+            android:name="diseaseId"
+            app:argType="integer" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/scan"
+        android:name="com.example.a_raiceandrd.ui.scan.ScanFragment"
+        android:label="fragment_scan"
+        tools:layout="@layout/fragment_scan" >
+        <action
+            android:id="@+id/action_scan_to_scanResultsFragment"
+            app:destination="@id/scanResultsFragment" />
+    </fragment>
+
+    <!--Admin Fragments-->
+    <fragment
+        android:id="@+id/adhome"
+        android:name="com.example.a_raiceandrd.ui.admin.AdHomeFragment"
+        android:label="fragment_ad_home"
+        tools:layout="@layout/fragment_ad_home" />
+
+    <fragment
+        android:id="@+id/admap"
+        android:name="com.example.a_raiceandrd.ui.map.ProvinceMap"
+        android:label="fragment_province_map"
+        tools:layout="@layout/fragment_province_map" />
+
+    <fragment
+        android:id="@+id/adnotif"
+        android:name="com.example.a_raiceandrd.ui.admin.BroadcastFragment"
+        android:label="fragment_broadcast"
+        tools:layout="@layout/fragment_broadcast" />
+
+    <fragment
+        android:id="@+id/adreport"
+        android:name="com.example.a_raiceandrd.ui.admin.ReportsFragment"
+        android:label="fragment_reports"
+        tools:layout="@layout/fragment_reports" />
+
+    <!-- sa both farmer and admin -->
+    <fragment
+        android:id="@+id/profile"
+        android:name="com.example.a_raiceandrd.ui.account.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <!--Global action(??) ginagamit ng Logout kahit saan -->
+    <action
+        android:id="@+id/action_global_loginFragment"
+        app:destination="@id/loginFragment"
+        app:popUpTo="@id/nav_graph"
+        app:popUpToInclusive="true" />
+    <fragment
+        android:id="@+id/scanResultsFragment"
+        android:name="com.example.a_raiceandrd.ui.scan.ScanResultsFragment"
+        android:label="fragment_scan_results"
+        tools:layout="@layout/fragment_scan_results" />
+</navigation>

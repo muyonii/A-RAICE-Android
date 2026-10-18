@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.ARAICEAndrd" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/gold</item>
+        <item name="colorOnPrimary">@color/paddy_950</item>
+        <item name="colorSurface">@color/paddy_900</item>
+        <item name="colorOnSurface">@color/husk</item>
+        <item name="colorSecondary">@color/sky</item>
+        <item name="colorError">@color/rust</item>
+        <item name="android:colorBackground">@color/paddy_950</item>
+    </style>
+
+    <style name="Theme.ARAICEAndrd" parent="Base.Theme.ARAICEAndrd" />
+</resources>

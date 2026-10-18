@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".ui.admin.BroadcastFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="45dp">
+
+        <TextView
+            android:id="@+id/AdAlerts"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="25dp"
+            android:fontFamily="@font/spacegrotesk_bold"
+            android:text="@string/AdAlerts"
+            android:textSize="30sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/AdAlerts_Sub"
+            android:layout_width="338dp"
+            android:layout_height="42dp"
+            android:layout_marginTop="2dp"
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/AdAlerts_Sub"
+            android:textColor="@color/husk_dim"
+            android:textSize="15sp"
+            app:layout_constraintStart_toStartOf="@id/AdAlerts"
+            app:layout_constraintTop_toBottomOf="@id/AdAlerts" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    <include
+        android:id="@+id/topBar"
+        layout="@layout/view_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</FrameLayout>
