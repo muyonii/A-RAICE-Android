@@ -81,6 +81,12 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
                     showMessage(errorMessage(e))
                     b.btnRetryScan.isVisible = true
                 }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (_b != null) {
+                    showMessage(errorMessage(e))
+                    b.btnRetryScan.isVisible = true
+                }
             } finally {
                 if (_b != null) {
                     b.scanResultsProgress.isVisible = false
@@ -114,17 +120,24 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
         }
 
         val disease = scan.disease
-        if (disease == null) {
-            showMessage("No disease identified. Retake the photo: one leaf, close-up, daylight, plain background.")
+        val isHealthy = disease?.name.equals("Healthy Rice Plant", ignoreCase = true)
+        val isUnrecognised = disease == null
+
+        if (isUnrecognised) {
+            showMessage(getString(R.string.Scan_Unrecognised_Desc))
             b.resultCard.isVisible = true
-            b.tvDisease.text = getString(R.string.Scans_Healthy)
-            b.tvConfidence.text = scan.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
+            b.tvDisease.text = getString(R.string.Scan_Unrecognised)
+            b.tvConfidence.text = scan.confidence?.let { "${Math.round(it * 100)}%" } ?: "—"
+            b.btnViewEncyclopedia.isVisible = false
+            b.tvTreatment.isVisible = false
+            b.treatmentCard.isVisible = false
+            b.cardOutbreakNotice.isVisible = false
             return
         }
 
         b.resultCard.isVisible = true
-        b.tvDisease.text = disease.name ?: getString(R.string.Scans_Healthy)
-        b.tvConfidence.text = scan.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
+        b.tvDisease.text = disease.name ?: getString(R.string.Scan_Unrecognised)
+        b.tvConfidence.text = scan.confidence?.let { "${Math.round(it * 100)}%" } ?: "—"
 
         // Outbreak association notice
         if (scan.outbreakId != null || scan.outbreak != null) {
@@ -150,7 +163,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
 
         // Low confidence notice (< 0.6)
         if ((scan.confidence ?: 1.0) < 0.6) {
-            showMessage("Low confidence. Consider retaking the photo in better light.")
+            showMessage(getString(R.string.Hint))
         }
 
         // Top 3 predictions
@@ -164,7 +177,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
             top3.forEach { item ->
                 val row = ItemTopDiseaseBinding.inflate(layoutInflater, b.llTop3, false)
                 row.tvTopDiseaseName.text = item.diseaseName
-                row.tvTopDiseaseConfidence.text = item.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
+                row.tvTopDiseaseConfidence.text = item.confidence?.let { "${Math.round(it * 100)}%" } ?: "—"
                 b.llTop3.addView(row.root)
             }
         } else {
@@ -204,7 +217,8 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
             "chemical"   -> R.color.badge_high_bg to R.color.badge_high_text
             "biological" -> R.color.badge_moderate_bg to R.color.badge_moderate_text
             "cultural"   -> R.color.badge_low_bg to R.color.badge_low_text
-            else         -> R.color.surface_chip to R.color.surface_chip
+            "organic"    -> R.color.badge_low_bg to R.color.badge_low_text
+            else         -> R.color.surface_chip to R.color.text_primary
         }
         row.tvTag.backgroundTintList =
             ColorStateList.valueOf(ContextCompat.getColor(requireContext(), bg))

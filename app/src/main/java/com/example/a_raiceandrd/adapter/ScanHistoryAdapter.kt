@@ -34,16 +34,23 @@ class ScanHistoryAdapter(
         val ctx = holder.itemView.context
 
         with(holder.binding) {
-            val diseaseName = item.disease?.name ?: ctx.getString(R.string.Scans_Healthy)
+            val isHealthy = item.disease?.name.equals("Healthy Rice Plant", ignoreCase = true)
+            val isUnrecognised = item.disease == null
+
+            val diseaseName = when {
+                isHealthy -> item.disease?.name ?: ctx.getString(R.string.Badge_Healthy)
+                isUnrecognised -> ctx.getString(R.string.Scan_Unrecognised)
+                else -> item.disease?.name.orEmpty()
+            }
             tvScanDisease.text = diseaseName
 
-            val timeLabel = formatTime(item.createdAt).ifEmpty { "Recently" }
-            val confLabel = item.confidence?.let { " · ${(it * 100).toInt()}%" }.orEmpty()
+            val timeLabel = formatTime(item.createdAt).ifEmpty { ctx.getString(R.string.Recently) }
+            val confLabel = item.confidence?.let { " · ${Math.round(it * 100)}%" }.orEmpty()
             tvScanMeta.text = "$timeLabel$confLabel"
 
             if (isAdmin && !item.farmer?.name.isNullOrBlank()) {
                 tvScanFarmer.isVisible = true
-                tvScanFarmer.text = "Farmer: ${item.farmer?.name}"
+                tvScanFarmer.text = ctx.getString(R.string.Farmer_Format, item.farmer?.name)
             } else {
                 tvScanFarmer.isVisible = false
             }
@@ -57,19 +64,24 @@ class ScanHistoryAdapter(
                     R.color.badge_high_text
                 )
                 status == "processing" -> Triple(
-                    "PROCESSING",
+                    ctx.getString(R.string.Status_Processing),
                     R.color.badge_low_bg,
                     R.color.badge_low_text
                 )
                 status == "failed" -> Triple(
-                    "FAILED",
+                    ctx.getString(R.string.Status_Failed),
                     R.color.badge_high_bg,
                     R.color.badge_high_text
                 )
-                item.disease == null -> Triple(
+                isHealthy -> Triple(
                     ctx.getString(R.string.Badge_Healthy),
                     R.color.badge_low_bg,
                     R.color.badge_low_text
+                )
+                isUnrecognised -> Triple(
+                    ctx.getString(R.string.Badge_Unrecognised),
+                    R.color.surface_chip,
+                    R.color.text_secondary
                 )
                 else -> Triple(
                     ctx.getString(R.string.Badge_Detected),

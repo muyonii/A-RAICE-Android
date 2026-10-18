@@ -10,7 +10,7 @@
     <string name="Register">No account? Register</string>
 
     <!--Register-->
-    <string name="Reg_Sub"> Create an Account </string>
+    <string name="Reg_Sub">Create an Account</string>
     <string name="Name">Full Name</string>
     <string name="Name_hint">e.g., Pedro Cruz</string>
     <string name="Email_hint">e.g., pedrocruz@gmail.com</string>
@@ -18,7 +18,6 @@
     <string name="Address">Address</string>
     <string name="Municipal">Municipality</string>
     <string name="Barangay">Barangay</string>
-    <string name="Barangay_hint">e.g., Poblacion</string>
     <string name="Create">Create Account</string>
     <string name="Confirm_Password">Confirm Password</string>
     <string name="Confirm_Password_hint">Re-enter password</string>
@@ -26,9 +25,7 @@
     <string name="Contact_Number_hint">e.g., 09171234567</string>
     <string name="Farm_Coordinates">Farm Location Coordinates</string>
     <string name="Latitude">Latitude (14.3 - 14.95)</string>
-    <string name="Latitude_hint">e.g., 14.6789</string>
     <string name="Longitude">Longitude (120.2 - 120.7)</string>
-    <string name="Longitude_hint">e.g., 120.5345</string>
     <string name="Use_Current_Location">Use my current location</string>
     <string name="Location_Permission_Denied">Location permission denied. Enter manually.</string>
     <string name="Location_Unavailable">Could not get current location. Enter manually.</string>
@@ -43,9 +40,7 @@
     <string name="Error_Lat_Bounds">Latitude must be between 14.3 and 14.95</string>
     <string name="Error_Long_Bounds">Longitude must be between 120.2 and 120.7</string>
     <string name="Back_To_Login">Already have an account? Log in</string>
-    <string name="Logging_In">Logging in…</string>
-    <string name="Registering">Creating account…</string>
-    <string name="Validating_Session">Checking session…</string>
+    <string name="Register_Success">Account created successfully! Welcome to A-RAICE.</string>
 
     <!--Navigation Bar-->
     <string name="Home">Home</string>
@@ -54,21 +49,24 @@
     <string name="Ency">Ency</string>
     <string name="Dashb">Dashboard</string>
     <string name="Reports">Reports</string>
-    <string name="Profile">Profile</string>
 
     <!--Home-->
     <string name="Notif_module">NOTIFICATION MODULE</string>
     <string name="Recent_act">RECENT ACTIVITY</string>
     <string name="Risk_barangay">BARANGAY RISK LEVEL</string>
     <string name="homeSub">Here\'s what\'s happening on your farm and nearby today.</string>
+    <string name="Greeting_Anonymous">Kumusta!</string>
+    <string name="Greeting_Personalized">Kumusta, %1$s</string>
+    <string name="Disease_Active_Nearby">%1$s active nearby</string>
+    <string name="No_Active_Alerts">No active alerts in your area.</string>
 
     <!--Map-->
     <string name="DMap">Disease Map</string>
     <string name="DMap_Sub">Updated live from farmer scans</string>
     <string name="Active">Active disease</string>
     <string name="Monitoring">Monitoring</string>
-    <string name="Healthy">Healthy</string>
     <string name="Nearby">NEARBY HOTSPOTS</string>
+    <string name="Map_Offline_Warning">Unable to load latest outbreak data. Showing offline map.</string>
 
     <!--Scan-->
     <string name="Scan_title">Image Processing Module</string>
@@ -87,46 +85,52 @@
     <string name="View_In_Encyclopedia">View in Encyclopedia →</string>
     <string name="Linked_Outbreak_Note">⚠ Associated with an active outbreak in this area.</string>
     <string name="Scan_Failed">Diagnosis failed. The leaf could not be classified.</string>
+    <string name="Scan_Unrecognised">Unidentified Plant</string>
+    <string name="Scan_Unrecognised_Desc">No disease identified. Retake the photo: one leaf, close-up, daylight, plain background.</string>
+    <string name="Badge_Unrecognised">UNRECOGNISED</string>
+    <string name="Capture_Failed">Failed to capture image. Please try again.</string>
     <string name="Retry">Retry Scan</string>
     <string name="Scan_History">Scan History</string>
     <string name="All_Scans">All Field Scans</string>
     <string name="No_Scans_Found">No scan records found</string>
     <string name="No_Scans_Sub">Recorded scans will appear here.</string>
+    <string name="Failed_To_Load_Scans">Failed to load scans</string>
     <string name="Filter_All_Municipalities">All Municipalities</string>
     <string name="Filter_All_Diseases">All Diseases</string>
     <string name="View_All">View all →</string>
+    <string name="Scan_Title_Format">Scan: %1$s%2$s</string>
 
     <!--Alerts-->
     <string name="Alerts_Sub">Notification module — risk alerts for your plots</string>
-    <string name="Filter_Unread_Only">Unread only</string>
-    <string name="No_Alerts_Found">No alerts to display</string>
-    <string name="No_Unread_Alerts">You have no unread alerts</string>
+    <string name="Unread_Only">Unread only</string>
+    <string name="No_Alerts_Found">No alerts right now</string>
+    <string name="No_Unread_Alerts">No unread alerts</string>
+    <string name="Failed_To_Load_Alerts">Failed to load alerts</string>
+    <string name="Mark_Read_Failed">Failed to mark alert as read.</string>
 
     <!--Encyclopedia-->
-    <string name="Encyclopedia">Encyclopedia</string>
-    <string name="Ency_Sub">Rice disease reference library</string>
-    <string name="ency_history">History</string>
-    <string name="ency_causes">Causes</string>
-    <string name="ency_symptoms">Symptoms</string>
-    <string name="ency_prevention">Prevention</string>
-    <string name="ency_treatment">Treatment</string>
-    <string name="ency_view_more">Read more →</string>
-    <string name="ency_search_hint">Search diseases, symptoms, causes...</string>
-    <string name="ency_no_results">No diseases found matching your search</string>
-    <string name="ency_load_error">Could not load disease information</string>
-    <string name="ency_retry">Retry</string>
+    <string name="Ency_Title">Disease Encyclopedia</string>
+    <string name="Ency_Subtitle">Visual identification and treatment protocols</string>
+    <string name="Search_Diseases_Hint">Search diseases, symptoms, causes…</string>
+    <string name="No_Diseases_Found">No diseases matching your search</string>
+    <string name="Overview">OVERVIEW</string>
+    <string name="Symptoms">SYMPTOMS</string>
+    <string name="Causes">CAUSES AND SPREAD</string>
+    <string name="Prevention">PREVENTION</string>
+    <string name="History">HISTORY AND SPREAD</string>
+    <string name="Treatments">TREATMENTS</string>
+    <string name="Sources">SOURCES</string>
+    <string name="Treatments_Count">%1$d treatments</string>
 
-    <!--Ad Home-->
-    <string name="Stat_Scans">Total scans</string>
-    <string name="Stat_Scans_Sub">All recorded scans</string>
-    <string name="Stat_Confirmed">Confirmed cases</string>
-    <string name="Stat_Confirmed_Sub">%1$s%% positive rate</string>
-    <string name="Stat_Active">Active outbreaks</string>
-    <string name="Stat_Active_Sub">Across %1$d municipalities</string>
-    <string name="Stat_Farmers">Farmers monitored</string>
-    <string name="Stat_Farmers_Sub">Reporting scans</string>
-
-    <string name="AdGenerate_Report">Generate report</string>
+    <!--Admin Home-->
+    <string name="Stat_Scans">TOTAL SCANS</string>
+    <string name="Stat_Scans_Sub">province-wide scans</string>
+    <string name="Stat_Confirmed">CONFIRMED CASES</string>
+    <string name="Stat_Confirmed_Sub">%1$s%% of all scans</string>
+    <string name="Stat_Active">ACTIVE OUTBREAKS</string>
+    <string name="Stat_Active_Sub">across %1$d municipalities</string>
+    <string name="Stat_Farmers">REGISTERED FARMS</string>
+    <string name="Stat_Farmers_Sub">monitored on map</string>
 
     <string name="AdHome_Eyebrow">PROVINCIAL COMMAND CENTER</string>
     <string name="AdHome_Greeting">Hello, Administrator</string>
@@ -147,10 +151,16 @@
     <string name="Scans_Sub">%1$s · %2$d%% confidence</string>
     <string name="Scans_Healthy">Healthy crop</string>
     <string name="Scans_ViewAll">View all scan records →</string>
-    <string name="Scans_Soon">Scan records are coming soon</string>
     <string name="Badge_Outbreak">OUTBREAK</string>
     <string name="Badge_Detected">DETECTED</string>
     <string name="Badge_Healthy">HEALTHY</string>
+    <string name="Status_Processing">PROCESSING</string>
+    <string name="Status_Failed">FAILED</string>
+    <string name="Farmer_Format">Farmer: %1$s</string>
+    <string name="Recently">Recently</string>
+    <string name="None">None</string>
+    <string name="Unknown_Disease">Unknown disease</string>
+    <string name="Location_Not_Specified">Location not specified</string>
 
     <!--Ad Map-->
     <string name="AdMap">Province Disease Map</string>
@@ -170,18 +180,11 @@
     <string name="Resolve_Success">Outbreak marked as resolved.</string>
     <string name="Resolve_Conflict">This outbreak has already been resolved.</string>
     <string name="Resolve_Error">Failed to resolve outbreak.</string>
-    <string name="Farm_Details">Farm Information</string>
     <string name="Tap_To_Call">Call Farmer: %1$s</string>
     <string name="No_Outbreaks_In_Area">No active outbreaks reported in %1$s</string>
     <string name="Selected_Area">Selected: %1$s</string>
-
-    <!--Ad Reports-->
-    <string name="AdReport">Reports</string>
-    <string name="AdReport_Sub">Consolidated disease occurrence reports</string>
-
-    <!--Ad Alerts-->
-    <string name="AdAlerts">Alert Broadcasts</string>
-    <string name="AdAlerts_Sub">Notification module — send risk alerts to farmer accounts</string>
+    <string name="Failed_To_Load_Map">Failed to load map data</string>
+    <string name="Failed_To_Load_Outbreak_History">Failed to load outbreak history</string>
 
     <!--Profile-->
     <string name="Close">Close</string>
@@ -197,7 +200,6 @@
     <string name="New_Password">New Password</string>
     <string name="Confirm_New_Password">Confirm New Password</string>
     <string name="Current_Password_hint">Enter current password</string>
-    <string name="New_Password_hint">At least 8 characters</string>
     <string name="Password_Updated">Password updated successfully</string>
     <string name="Profile_Updated">Profile updated successfully</string>
     <string name="Save_Changes">Save Changes</string>
@@ -205,20 +207,16 @@
     <string name="My_Scans">My scans</string>
     <string name="Contact">Contact number</string>
     <string name="Coordinates">Farm coordinates</string>
-    <string name="Updating_Profile">Updating profile…</string>
-    <string name="Updating_Password">Updating password…</string>
     <string name="Logout">Log out</string>
 
     <!--Drawer-->
     <string name="Drawer_Tagline">Rice intelligence system</string>
     <string name="Drawer_Workspace">WORKSPACE · SECONDARY</string>
     <string name="Drawer_FarmerRecords">Farmer records</string>
-    <string name="Drawer_Resources">Resources</string>
     <string name="Drawer_Account">ACCOUNT</string>
     <string name="Drawer_AccountSettings">Account settings</string>
     <string name="Drawer_Appearance">Appearance</string>
     <string name="Drawer_LightMode">Light mode</string>
-    <string name="Drawer_Soon">Coming soon</string>
     <string name="Drawer_DarkMode">Dark mode</string>
     <string name="Drawer_RoleAdmin">Administrator</string>
     <string name="Drawer_RoleFarmer">Farmer</string>
@@ -228,6 +226,7 @@
     <string name="Farmer_Records_Subtitle">Monitored farms from surveillance map</string>
     <string name="Search_Farmers_Hint">Search farmer name, barangay, or municipality…</string>
     <string name="No_Farmers_Found">No farmer records found</string>
+    <string name="Failed_To_Load_Farmer_Records">Failed to load farmer records</string>
     <string name="Call_Farmer">Call</string>
     <string name="Last_Scan_Format">Last scan: %1$s · %2$s</string>
     <string name="No_Scans_Yet">No recent scans</string>
@@ -243,7 +242,6 @@
     <string name="Broadcast_Severity_Medium">Medium</string>
     <string name="Broadcast_Severity_High">High</string>
     <string name="Broadcast_Audience_Label">Target Audience</string>
-    <string name="Broadcast_Audience_All">All Municipalities (Province-wide)</string>
     <string name="Broadcast_Outbreak_Label">Link Active Outbreak (Optional)</string>
     <string name="Broadcast_Outbreak_None">None (General advisory)</string>
     <string name="Broadcast_Send_Button">Send Broadcast Alert</string>
@@ -251,20 +249,18 @@
     <string name="Broadcast_Confirm_Message">Send this %1$s severity alert to: %2$s?</string>
     <string name="Broadcast_Success">Sent alert to %1$d recipients</string>
     <string name="Broadcast_History_Title">Recent Alerts</string>
-    <string name="Broadcast_Sending">Sending broadcast…</string>
 
     <!-- Reports -->
     <string name="Reports_Title">Consolidated Reports</string>
     <string name="Reports_Subtitle">Surveillance analytics and disease reports</string>
     <string name="Generate_Report_Button">Generate New Report</string>
     <string name="Report_Municipality_Label">Municipality</string>
-    <string name="Report_Municipality_All">All Municipalities</string>
     <string name="Report_Date_Range_Label">Date Range</string>
     <string name="Report_Date_Range_Hint">Select start and end date</string>
     <string name="Report_Disease_Label">Disease Filter (Optional)</string>
     <string name="Report_Disease_All">All Diseases</string>
     <string name="Report_Generate_Submit">Generate</string>
-    <string name="Report_Generating">Generating report…</string>
+    <string name="Report_Select_Municipality">Please select a municipality</string>
     <string name="Reports_History_Title">Generated Reports</string>
     <string name="Report_Detail_Title">Report Details</string>
     <string name="Report_Total_Scans">Total Scans</string>
@@ -278,4 +274,17 @@
     <string name="Report_Date_Range_Format">%1$s to %2$s</string>
     <string name="Report_Summary_Share_Text">A-RAICE Surveillance Report\nMunicipality: %1$s\nPeriod: %2$s to %3$s\nTotal Scans: %4$d\nConfirmed Cases: %5$d\nTop Disease: %6$s\nGenerated by: %7$s</string>
 
+    <!-- Network & System Errors -->
+    <string name="Error_Login_Invalid">Invalid email or password.</string>
+    <string name="Error_Validation_Failed">Validation failed. Please check the entered data.</string>
+    <string name="Error_Session_Expired">Session expired. Please log in again.</string>
+    <string name="Error_No_Access">You do not have access to this feature.</string>
+    <string name="Error_Not_Found">The requested resource was not found.</string>
+    <string name="Error_Conflict">Conflict: This record was already updated or resolved.</string>
+    <string name="Error_Rate_Limited">Too many attempts. Please wait a minute and retry.</string>
+    <string name="Error_Server">Server error (%1$d).</string>
+    <string name="Error_Timeout">The server is taking too long to respond (the AI model may be waking up). Please try again.</string>
+    <string name="Error_Network">No internet connection.</string>
+    <string name="Error_Generic">Something went wrong. Please try again.</string>
+    <string name="Error_No_Dialer">No app found to place phone calls.</string>
 </resources>

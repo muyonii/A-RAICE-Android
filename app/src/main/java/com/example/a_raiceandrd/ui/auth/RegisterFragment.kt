@@ -157,7 +157,7 @@ class RegisterFragment : Fragment() {
         clearFieldErrors()
 
         val name = binding.etName.text?.toString()?.trim().orEmpty()
-        val email = binding.etEmail.text?.toString()?.trim().orEmpty()
+        val email = binding.etEmail.text?.toString()?.trim().orEmpty().lowercase()
         val contactNumber = binding.etContactNumber.text?.toString()?.trim().orEmpty()
         val password = binding.etPassword.text?.toString().orEmpty()
         val passwordConfirm = binding.etPasswordConfirm.text?.toString().orEmpty()
@@ -243,7 +243,7 @@ class RegisterFragment : Fragment() {
                 }
 
                 FLogin.saveSession(response.token, response.user)
-                Toast.makeText(requireContext(), R.string.homeSub, Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.Register_Success, Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.action_registerFragment_to_home)
             } catch (e: HttpException) {
                 if (e.code() == 422) {
@@ -253,6 +253,7 @@ class RegisterFragment : Fragment() {
                     Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
             } finally {
                 if (_binding != null) {
@@ -273,10 +274,12 @@ class RegisterFragment : Fragment() {
         errors["farm_lat"]?.let { binding.tilFarmLat.error = it }
         errors["farm_long"]?.let { binding.tilFarmLong.error = it }
 
-        if (errors["general"] != null || errors["message"] != null) {
+        val mappedKeys = setOf("name", "email", "password", "password_confirmation", "contact_number", "municipality", "barangay", "farm_lat", "farm_long")
+        val unmapped = errors.filterKeys { it !in mappedKeys }
+        if (unmapped.isNotEmpty()) {
             Toast.makeText(
                 requireContext(),
-                errors["general"] ?: errors["message"],
+                unmapped.values.firstOrNull() ?: getString(R.string.Error_Validation_Failed),
                 Toast.LENGTH_LONG
             ).show()
         }

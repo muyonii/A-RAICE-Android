@@ -74,14 +74,17 @@ object ApiClient {
             val origRequest = chain.request()
             val requestBuilder = origRequest.newBuilder()
                 .header("Accept", "application/json")
-            token?.let { requestBuilder.header("Authorization", "Bearer $it") }
+            if (origRequest.header("Authorization") == null) {
+                token?.let { requestBuilder.header("Authorization", "Bearer $it") }
+            }
 
             val response = chain.proceed(requestBuilder.build())
 
             if (response.code == 401) {
                 val path = origRequest.url.encodedPath
-                // Do not trigger global logout for the login attempt itself
-                if (!path.endsWith("/login") && !path.endsWith("login")) {
+                // Do not trigger global logout for login or logout attempts
+                if (!path.endsWith("/login") && !path.endsWith("login") &&
+                    !path.endsWith("/logout") && !path.endsWith("logout")) {
                     token = null
                     FLogin.clearSessionLocally()
                     unauthorizedEvents.tryEmit(Unit)

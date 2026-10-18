@@ -252,7 +252,7 @@ class ProfileFragment : Fragment() {
             dBinding.tilEditLong.error = null
 
             val name = dBinding.etEditName.text?.toString()?.trim().orEmpty()
-            val email = dBinding.etEditEmail.text?.toString()?.trim().orEmpty()
+            val email = dBinding.etEditEmail.text?.toString()?.trim().orEmpty().lowercase()
 
             var hasError = false
             if (name.isBlank()) {
@@ -336,10 +336,17 @@ class ProfileFragment : Fragment() {
                         fieldErrors["barangay"]?.let { dBinding.tilEditBarangay.error = it }
                         fieldErrors["farm_lat"]?.let { dBinding.tilEditLat.error = it }
                         fieldErrors["farm_long"]?.let { dBinding.tilEditLong.error = it }
+
+                        val mappedKeys = setOf("name", "email", "contact_number", "municipality", "barangay", "farm_lat", "farm_long")
+                        val unmapped = fieldErrors.filterKeys { it !in mappedKeys }
+                        if (unmapped.isNotEmpty()) {
+                            Toast.makeText(requireContext(), unmapped.values.firstOrNull() ?: getString(R.string.Error_Validation_Failed), Toast.LENGTH_LONG).show()
+                        }
                     } else {
                         Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
                     }
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
                 } finally {
                     dBinding.editProfileProgress.isVisible = false
@@ -439,10 +446,17 @@ class ProfileFragment : Fragment() {
                         fieldErrors["current_password"]?.let { dBinding.tilCurrentPassword.error = it }
                         fieldErrors["password"]?.let { dBinding.tilNewPassword.error = it }
                         fieldErrors["password_confirmation"]?.let { dBinding.tilConfirmNewPassword.error = it }
+
+                        val mappedKeys = setOf("current_password", "password", "password_confirmation")
+                        val unmapped = fieldErrors.filterKeys { it !in mappedKeys }
+                        if (unmapped.isNotEmpty()) {
+                            Toast.makeText(requireContext(), unmapped.values.firstOrNull() ?: getString(R.string.Error_Validation_Failed), Toast.LENGTH_LONG).show()
+                        }
                     } else {
                         Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
                     }
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
                 } finally {
                     dBinding.changePasswordProgress.isVisible = false

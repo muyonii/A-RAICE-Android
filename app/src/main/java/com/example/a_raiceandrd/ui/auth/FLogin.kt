@@ -92,16 +92,19 @@ object FLogin {
         currentName = null
 
         prefs?.edit()?.clear()?.apply()
+        com.example.a_raiceandrd.ui.home.HomeFragment.Cache.clear()
     }
 
     fun logout() {
-        val token = ApiClient.token
+        val tokenToRevoke = ApiClient.token
         clearSessionLocally()
 
         // Tell the server to delete the token (best effort)
-        if (token != null) {
+        if (!tokenToRevoke.isNullOrBlank()) {
             CoroutineScope(Dispatchers.IO).launch {
-                runCatching { ApiClient.service.logout() }
+                runCatching {
+                    ApiClient.service.logout("Bearer $tokenToRevoke")
+                }
             }
         }
     }

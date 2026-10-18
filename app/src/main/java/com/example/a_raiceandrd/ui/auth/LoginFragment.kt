@@ -78,7 +78,7 @@ class LoginFragment : Fragment() {
     }
 
     private fun attemptLogin() {
-        val email = binding.email.text?.toString()?.trim().orEmpty()
+        val email = binding.email.text?.toString()?.trim().orEmpty().lowercase()
         val password = binding.password.text?.toString().orEmpty()
 
         binding.tilEmail.error = null
@@ -113,14 +113,18 @@ class LoginFragment : Fragment() {
                     val fieldErrors = parseFieldErrors(e)
                     fieldErrors["email"]?.let { binding.tilEmail.error = it }
                     fieldErrors["password"]?.let { binding.tilPassword.error = it }
-                    if (binding.tilEmail.error == null && binding.tilPassword.error == null) {
-                        Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
+                    val unmapped = fieldErrors.filterKeys { it != "email" && it != "password" }
+                    if (unmapped.isNotEmpty()) {
+                        Toast.makeText(requireContext(), unmapped.values.firstOrNull() ?: errorMessage(e, isLogin = true), Toast.LENGTH_LONG).show()
+                    } else if (binding.tilEmail.error == null && binding.tilPassword.error == null) {
+                        Toast.makeText(requireContext(), errorMessage(e, isLogin = true), Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), errorMessage(e, isLogin = true), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
+                if (e is CancellationException) throw e
+                Toast.makeText(requireContext(), errorMessage(e, isLogin = true), Toast.LENGTH_LONG).show()
             } finally {
                 if (_binding != null) {
                     setLoading(false)

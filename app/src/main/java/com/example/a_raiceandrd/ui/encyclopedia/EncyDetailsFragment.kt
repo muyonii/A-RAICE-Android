@@ -40,11 +40,15 @@ class EncyDetailsFragment : Fragment(R.layout.fragment_ency_details) {
 
         // Fetch live / cached detail
         viewLifecycleOwner.lifecycleScope.launch {
-            val disease = DiseaseRepo.getDiseaseDetail(requireContext(), id)
-            if (disease != null) {
-                bindDisease(disease)
-            } else if (initial == null) {
-                findNavController().navigateUp()
+            try {
+                val disease = DiseaseRepo.getDiseaseDetail(requireContext(), id)
+                if (disease != null) {
+                    bindDisease(disease)
+                } else if (initial == null) {
+                    findNavController().navigateUp()
+                }
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
             }
         }
     }
@@ -148,7 +152,7 @@ class EncyDetailsFragment : Fragment(R.layout.fragment_ency_details) {
             "bacterial" -> R.color.badge_moderate_bg to R.color.badge_moderate_text
             "viral"     -> R.color.badge_low_bg to R.color.badge_low_text
             "fungal"    -> R.color.badge_high_bg to R.color.badge_high_text
-            else        -> R.color.surface_card to R.color.surface_card
+            else        -> R.color.surface_chip to R.color.text_primary
         }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()

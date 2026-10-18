@@ -134,22 +134,26 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         // Notification module: risk ring + latest alert
-        if (alerts != null) {
-            val latest = alerts.firstOrNull()
+        if (alerts != null || map != null) {
+            val latest = alerts?.firstOrNull()
             val slug = user?.farmerProfile?.municipality?.trim()
                 ?.lowercase(Locale.ROOT)?.replace(" ", "-")
-            val severity = map?.municipalities
-                ?.firstOrNull { it.slug.equals(slug, ignoreCase = true) }?.severity
-                ?: latest?.severity
+            val muniDto = map?.municipalities?.firstOrNull { it.slug.equals(slug, ignoreCase = true) }
+            val severity = if (muniDto != null) {
+                // If farmer's municipality is in map data, its severity is authoritative (null = safe/low)
+                muniDto.severity
+            } else {
+                null
+            }
             applyRisk(severity)
 
             val disease = latest?.disease.asDisplayText()
             binding.notifTitle.text = when {
-                disease != null -> "$disease active nearby"
+                disease != null -> getString(R.string.Disease_Active_Nearby, disease)
                 latest != null -> latest.message.orEmpty()
                 else -> getString(R.string.app_name)
             }
-            binding.notifBody.text = latest?.message ?: "No active alerts in your area."
+            binding.notifBody.text = latest?.message ?: getString(R.string.No_Active_Alerts)
         }
 
     // Recent activity: newest alerts + scans, never more than MAX_RECENT rows.
@@ -221,7 +225,8 @@ private fun String?.toMillis(): Long {
         replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
 
     private fun greeting(name: String?) =
-        if (name.isNullOrBlank()) "Kumusta!" else "Kumusta, $name"
+        if (name.isNullOrBlank()) getString(R.string.Greeting_Anonymous)
+        else getString(R.string.Greeting_Personalized, name)
 
     override fun onDestroyView() {
         requireView().showNav()
@@ -230,11 +235,18 @@ private fun String?.toMillis(): Long {
     }
 
     // Last results, kept in memory so reopening Home is instant.
-    private object Cache {
+    object Cache {
         var user: UserDto? = null
         var alerts: List<AlertDto>? = null
         var scans: List<ScanItem>? = null
         var map: MapResponse? = null
+
+        fun clear() {
+            user = null
+            alerts = null
+            scans = null
+            map = null
+        }
     }
 
     private companion object {

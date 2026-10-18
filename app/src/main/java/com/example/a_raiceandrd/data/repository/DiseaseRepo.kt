@@ -292,8 +292,14 @@ object DiseaseRepo {
         )
     }
 
-    fun getBundledDetailAsDto(id: Int): DiseaseDto? {
-        val d = getById(id) ?: return null
+    fun getByName(name: String?): Disease? {
+        if (name.isNullOrBlank()) return null
+        val trimmed = name.trim().lowercase()
+        return diseases.firstOrNull { it.name.trim().lowercase() == trimmed }
+    }
+
+    fun getBundledDetailAsDto(id: Int, fallbackName: String? = null): DiseaseDto? {
+        val d = getById(id) ?: fallbackName?.let { getByName(it) } ?: return null
         return DiseaseDto(
             id = d.id,
             name = d.name,
@@ -316,9 +322,33 @@ object DiseaseRepo {
         )
     }
 
+    fun getCachedDiseases(context: Context): List<DiseaseDto> {
+        val cacheFile = File(context.filesDir, "diseases_cache.json")
+        if (cacheFile.exists()) {
+            try {
+                val json = cacheFile.readText()
+                val type = object : TypeToken<List<DiseaseDto>>() {}.type
+                val cached: List<DiseaseDto>? = Gson().fromJson(json, type)
+                if (!cached.isNullOrEmpty()) return cached
+            } catch (e: Exception) {
+                Log.w("DiseaseRepo", "Failed to read diseases cache", e)
+            }
+        }
+        return getBundledAsDto()
+    }
+
     suspend fun getDiseases(context: Context, forceRefresh: Boolean = false): List<DiseaseDto> {
         val cacheFile = File(context.filesDir, "diseases_cache.json")
         val gson = Gson()
+
+        // Cache-first: if not force-refreshing, return local cache/bundled data immediately
+        if (!forceRefresh) {
+            val cached = getCachedDiseases(context)
+            if (cached.isNotEmpty()) {
+                // Silently refresh in background
+                return cached
+            }
+        }
 
         try {
             val remote = ApiClient.service.getDiseases()
@@ -331,26 +361,36 @@ object DiseaseRepo {
                 return remote
             }
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("DiseaseRepo", "Network call getDiseases failed, falling back to cache", e)
         }
 
+        return getCachedDiseases(context)
+    }
+
+    fun getCachedDiseaseDetail(context: Context, id: Int, fallbackName: String? = null): DiseaseDto? {
+        val cacheFile = File(context.filesDir, "disease_${id}_cache.json")
+        val gson = Gson()
         if (cacheFile.exists()) {
             try {
                 val json = cacheFile.readText()
-                val type = object : TypeToken<List<DiseaseDto>>() {}.type
-                val cached: List<DiseaseDto>? = gson.fromJson(json, type)
-                if (!cached.isNullOrEmpty()) {
-                    return cached
-                }
-            } catch (e: Exception) {
-                Log.w("DiseaseRepo", "Failed to read diseases cache", e)
-            }
+                val cached: DiseaseDto? = gson.fromJson(json, DiseaseDto::class.java)
+                if (cached != null) return cached
+            } catch (_: Exception) {}
         }
-
-        return getBundledAsDto()
+        val listCacheFile = File(context.filesDir, "diseases_cache.json")
+        if (listCacheFile.exists()) {
+            try {
+                val type = object : TypeToken<List<DiseaseDto>>() {}.type
+                val cachedList: List<DiseaseDto>? = gson.fromJson(listCacheFile.readText(), type)
+                val match = cachedList?.firstOrNull { it.id == id || (fallbackName != null && it.name?.equals(fallbackName, ignoreCase = true) == true) }
+                if (match != null) return match
+            } catch (_: Exception) {}
+        }
+        return getBundledDetailAsDto(id, fallbackName)
     }
 
-    suspend fun getDiseaseDetail(context: Context, id: Int): DiseaseDto? {
+    suspend fun getDiseaseDetail(context: Context, id: Int, fallbackName: String? = null): DiseaseDto? {
         val cacheFile = File(context.filesDir, "disease_${id}_cache.json")
         val gson = Gson()
 
@@ -363,31 +403,10 @@ object DiseaseRepo {
             }
             return remote
         } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
             Log.w("DiseaseRepo", "Network call getDisease($id) failed, falling back to cache", e)
         }
 
-        if (cacheFile.exists()) {
-            try {
-                val json = cacheFile.readText()
-                val cached: DiseaseDto? = gson.fromJson(json, DiseaseDto::class.java)
-                if (cached != null) return cached
-            } catch (e: Exception) {
-                Log.w("DiseaseRepo", "Failed to read disease detail cache", e)
-            }
-        }
-
-        val listCacheFile = File(context.filesDir, "diseases_cache.json")
-        if (listCacheFile.exists()) {
-            try {
-                val type = object : TypeToken<List<DiseaseDto>>() {}.type
-                val cachedList: List<DiseaseDto>? = gson.fromJson(listCacheFile.readText(), type)
-                val match = cachedList?.firstOrNull { it.id == id }
-                if (match != null) return match
-            } catch (e: Exception) {
-                // ignore
-            }
-        }
-
-        return getBundledDetailAsDto(id)
+        return getCachedDiseaseDetail(context, id, fallbackName)
     }
 }

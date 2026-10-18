@@ -33,7 +33,7 @@ interface ApiService {
 
     // AUTHENTICATED
     @POST("logout")
-    suspend fun logout(): Response<Unit>
+    suspend fun logout(@retrofit2.http.Header("Authorization") authHeader: String? = null): Response<Unit>
 
     @GET("user")
     suspend fun getUser(): UserDto

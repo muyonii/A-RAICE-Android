@@ -216,12 +216,20 @@ data class MapFarmScanDto(
 data class MapFarmDto(
     val id: Int? = null,
     val farmer: FarmerRefDto? = null,
+    val name: String? = null,
+    @SerializedName("contact_number") val contactNumber: String? = null,
     val barangay: String? = null,
     val municipality: String? = null,
     val lat: Double? = null,
     val lng: Double? = null,
     val scan: MapFarmScanDto? = null
-)
+) {
+    val farmerName: String?
+        get() = farmer?.name ?: name
+
+    val farmerContact: String?
+        get() = farmer?.contactNumber ?: contactNumber
+}
 
 data class MapResponseDto(
     val municipalities: List<MapMunicipalityDto>? = null,

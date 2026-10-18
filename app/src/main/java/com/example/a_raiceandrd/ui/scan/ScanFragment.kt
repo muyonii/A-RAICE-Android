@@ -72,6 +72,8 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             b.tvHint.text = getString(R.string.AI_Warmup_Hint)
         }
 
+        cleanupTempFiles()
+
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
             == PackageManager.PERMISSION_GRANTED) startCamera()
         else permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -114,7 +116,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 override fun onImageSaved(r: ImageCapture.OutputFileResults) =
                     submit(Uri.fromFile(file))
                 override fun onError(e: ImageCaptureException) =
-                    toast("Capture failed: ${e.message}")
+                    toast(getString(R.string.Capture_Failed))
             })
     }
 
@@ -162,6 +164,7 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 }
                 findNavController().navigate(R.id.action_scan_to_scanResultsFragment, args)
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 toast(errorMessage(e))
             } finally {
                 if (_b != null) setLoading(false)
@@ -188,6 +191,19 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
 
     private fun toast(msg: String) =
         Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
+
+    private fun cleanupTempFiles() {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val cache = context?.cacheDir ?: return@launch
+                val now = System.currentTimeMillis()
+                cache.listFiles { f -> f.name.startsWith("leaf_") || f.name.startsWith("scan_") }
+                    ?.filter { now - it.lastModified() > 2 * 60 * 60 * 1000 } // older than 2 hours
+                    ?.forEach { it.delete() }
+            } catch (_: Exception) {
+            }
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

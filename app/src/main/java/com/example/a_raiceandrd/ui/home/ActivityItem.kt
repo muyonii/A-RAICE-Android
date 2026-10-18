@@ -3,10 +3,11 @@ package com.example.a_raiceandrd.ui.home
 import androidx.annotation.ColorRes
 import com.example.a_raiceandrd.R
 
-enum class ActivityType (@ColorRes val color: Int){
+enum class ActivityType (@param:ColorRes val color: Int) {
     ALERT(R.color.risk_high),
     WARNING(R.color.risk_moderate),
-    OK(R.color.risk_good)
+    OK(R.color.risk_good),
+    INFO(R.color.text_secondary)
 }
 
 /** Row model for Home's Recent Activity. `id` is optional and only used so DiffUtil can tell rows apart. */

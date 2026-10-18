@@ -4,15 +4,30 @@ import org.json.JSONObject
 import retrofit2.HttpException
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.util.Collections
+import java.util.WeakHashMap
 
-fun errorMessage(e: Exception): String = when (e) {
+private val errorBodyCache = Collections.synchronizedMap(WeakHashMap<HttpException, String>())
+
+private fun getCachedErrorBody(e: HttpException): String {
+    return errorBodyCache.getOrPut(e) {
+        try {
+            e.response()?.errorBody()?.string() ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
+}
+
+fun errorMessage(e: Exception, isLogin: Boolean = false): String = when (e) {
     is HttpException -> when (e.code()) {
-        401 -> "Session expired. Please log in again."
+        401 -> if (isLogin) "Invalid email or password." else "Session expired. Please log in again."
         403 -> "You don't have access to this."
         404 -> "Not found."
         409 -> "Conflict: This record was already updated or resolved."
         422 -> try {
-            val json = JSONObject(e.response()?.errorBody()?.string() ?: "")
+            val body = getCachedErrorBody(e)
+            val json = JSONObject(body)
             if (json.has("errors")) {
                 val errorsObj = json.getJSONObject("errors")
                 val firstKey = errorsObj.keys().asSequence().firstOrNull()
@@ -26,22 +41,21 @@ fun errorMessage(e: Exception): String = when (e) {
             } else {
                 json.optString("message", "Validation failed.")
             }
-        } catch (_: Exception) { "Invalid image or data." }
+        } catch (_: Exception) {
+            "Invalid image or data."
+        }
         429 -> "Too many attempts. Wait a minute and retry."
         else -> "Server error (${e.code()})."
     }
     is SocketTimeoutException -> "The server is taking too long (the AI model may be waking up). Try again."
     is IOException -> "No internet connection."
-    else -> e.message ?: "Something went wrong."
+    else -> "Something went wrong. Please try again."
 }
 
 fun parseFieldErrors(e: Exception): Map<String, String> {
     if (e !is HttpException || e.code() != 422) return emptyMap()
-    val errorBody = try {
-        e.response()?.errorBody()?.string() ?: return emptyMap()
-    } catch (_: Exception) {
-        return emptyMap()
-    }
+    val errorBody = getCachedErrorBody(e)
+    if (errorBody.isBlank()) return emptyMap()
 
     val result = mutableMapOf<String, String>()
     try {

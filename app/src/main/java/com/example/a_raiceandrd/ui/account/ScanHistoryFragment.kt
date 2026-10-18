@@ -37,6 +37,7 @@ class ScanHistoryFragment : Fragment() {
     private var currentPage = 1
     private var lastPage = 1
     private var isLoading = false
+    private var loadJob: kotlinx.coroutines.Job? = null
 
     private var selectedMunicipalitySlug: String? = null
     private var selectedDiseaseId: Int? = null
@@ -148,17 +149,19 @@ class ScanHistoryFragment : Fragment() {
     }
 
     private fun loadPage(page: Int, append: Boolean) {
-        if (isLoading) return
-        isLoading = true
-
+        if (append && isLoading) return
         if (!append) {
+            loadJob?.cancel()
+            isLoading = false
             if (!binding.swipeRefresh.isRefreshing) {
                 binding.initialProgress.isVisible = true
             }
             binding.layoutEmpty.isVisible = false
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        isLoading = true
+
+        loadJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.service.getScans(
@@ -180,10 +183,21 @@ class ScanHistoryFragment : Fragment() {
                 }
 
                 adapter.submitList(allScans.toList())
-                binding.layoutEmpty.isVisible = allScans.isEmpty()
+
+                val isEmpty = allScans.isEmpty()
+                binding.layoutEmpty.isVisible = isEmpty
+                if (isEmpty) {
+                    binding.tvEmptyTitle.setText(R.string.No_Scans_Found)
+                    binding.tvEmptyDesc.setText(R.string.No_Scans_Sub)
+                    binding.btnEmptyRetry.isVisible = false
+                }
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 if (!append && allScans.isEmpty()) {
                     binding.layoutEmpty.isVisible = true
+                    binding.tvEmptyTitle.setText(R.string.Failed_To_Load_Scans)
+                    binding.tvEmptyDesc.text = errorMessage(e)
+                    binding.btnEmptyRetry.isVisible = true
                 }
                 Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
             } finally {
