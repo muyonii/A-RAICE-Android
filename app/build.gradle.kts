@@ -7,9 +7,10 @@ android {
     compileSdk {
         version = release(36)
     }
-        buildFeatures {
-            viewBinding = true
-        }
+    buildFeatures {
+        viewBinding = true
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.example.a_raiceandrd"
@@ -17,6 +18,8 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "API_BASE_URL", "\"https://a-raice-web-production-be92.up.railway.app/api/\"")
 
         vectorDrawables.useSupportLibrary = true
 
@@ -42,30 +45,24 @@ configurations.all {
 }
 
 dependencies {
-    // Fragments + Navigation (screen-to-screen navigation, drag-and-drop graph editor included)
+    // Fragments + Navigation
     implementation("androidx.navigation:navigation-fragment-ktx:2.8.0")
     implementation("androidx.navigation:navigation-ui-ktx:2.8.0")
 
-    // Lists (scan history, alerts, encyclopedia, reports tables)
+    // Lists
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     // ViewModel + LiveData
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.0")
 
-    // View Binding is enabled via a Gradle flag below, not a dependency
-
-    // Networking (for later backend integration)
+    // Networking
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Local offline caching
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    implementation ("androidx.room:room-compiler:2.6.1")
-
-    // Camera (for scan screens)
+    // Camera
     implementation("androidx.camera:camera-camera2:1.4.0")
     implementation("androidx.camera:camera-lifecycle:1.4.0")
     implementation("androidx.camera:camera-view:1.4.0")
@@ -73,10 +70,10 @@ dependencies {
     // Image loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
-    // Map
-    implementation("com.google.android.gms:play-services-maps:19.0.0")
-    implementation(libs.androidx.cardview)
+    // Location
+    implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    implementation(libs.androidx.cardview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

@@ -66,7 +66,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
         b.tvDisease.text = disease.name
         b.tvConfidence.text = scan.confidence?.let { "${(it * 100).toInt()}%" } ?: "—"
 
-        if ((scan.confidence ?: 1f) < 0.6f) {
+        if ((scan.confidence ?: 1.0) < 0.6) {
             showMessage("Low confidence. Consider retaking the photo in better light.")
         }
 
@@ -84,7 +84,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
 
         // Show treatments in the order the API returns them
         treatments.forEachIndexed { i, t ->
-            addTreatmentRow(i, t.title, t.description.orEmpty(), t.type)
+            addTreatmentRow(i, t.title.orEmpty(), t.description.orEmpty(), t.type.orEmpty())
         }
     }
 

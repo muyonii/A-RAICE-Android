@@ -71,7 +71,7 @@ fun String?.toActivityType(): ActivityType = when (this?.lowercase(Locale.ROOT))
 // ---------- DTO -> UI models ----------
 
 fun AlertDto.toAlertItem() = AlertItem(
-    id = id.toLong(),
+    id = (id ?: 0).toLong(),
     title = message.orEmpty(),
     timeLabel = formatTime(createdAt),
     level = severity.toAlertLevel(),
@@ -82,17 +82,17 @@ fun AlertDto.toActivityItem() = ActivityItem(
     title = message.orEmpty(),
     timeAgo = formatTime(createdAt),
     type = severity.toActivityType(),
-    id = "alert-$id"
+    id = "alert-${id ?: 0}"
 )
 
 fun ScanItem.toActivityItem(): ActivityItem {
     val result = disease?.name ?: "No disease detected"
     val pct = confidence?.let { " (${(it * 100).toInt()}%)" }.orEmpty()
+    val time = formatTime(createdAt).ifEmpty { "SCAN RESULT" }
     return ActivityItem(
         title = "Scan: $result$pct",
-        // GET /api/scans has no timestamp, so show a label instead
-        timeAgo = "SCAN RESULT",
+        timeAgo = time,
         type = if (disease == null) ActivityType.OK else ActivityType.WARNING,
-        id = "scan-$id"
+        id = "scan-${id ?: 0}"
     )
 }

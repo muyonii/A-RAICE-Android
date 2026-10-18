@@ -14,6 +14,7 @@ import com.google.android.material.card.MaterialCardView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.example.a_raiceandrd.ui.auth.Role
 import com.example.a_raiceandrd.ui.auth.FLogin
+import com.example.a_raiceandrd.data.repository.api.ApiClient
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -78,6 +79,14 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.navController
+
+        ApiClient.onUnauthorized = {
+            runOnUiThread {
+                if (navController.currentDestination?.id != R.id.loginFragment) {
+                    navController.navigate(R.id.action_global_loginFragment)
+                }
+            }
+        }
 
         // drawer items that don't have a screen yet
         val soon = View.OnClickListener {
