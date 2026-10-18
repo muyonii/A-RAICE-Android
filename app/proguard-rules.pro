@@ -1,21 +1,32 @@
 # Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Retrofit & OkHttp
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Attributes
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Gson & Serialized data classes
+-keepattributes EnclosingMethod
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Models and API interfaces
+-keep class com.example.a_raiceandrd.data.repository.api.** { *; }
+-keep interface com.example.a_raiceandrd.data.repository.api.** { *; }
+-keep class com.example.a_raiceandrd.model.** { *; }
+
+# Glide
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep class com.bumptech.glide.** { *; }
