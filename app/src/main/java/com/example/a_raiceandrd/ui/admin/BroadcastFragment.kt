@@ -25,6 +25,7 @@ import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.toAlertItem
+import com.example.a_raiceandrd.util.BATAAN_MUNICIPALITIES
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -38,21 +39,12 @@ class BroadcastFragment : Fragment() {
     private data class AudienceOption(val label: String, val slug: String?)
     private data class OutbreakOption(val label: String, val id: Int?)
 
-    private val audienceOptions = listOf(
-        AudienceOption("All Municipalities (Province-wide)", null),
-        AudienceOption("Abucay", "abucay"),
-        AudienceOption("Bagac", "bagac"),
-        AudienceOption("Balanga", "balanga"),
-        AudienceOption("Dinalupihan", "dinalupihan"),
-        AudienceOption("Hermosa", "hermosa"),
-        AudienceOption("Limay", "limay"),
-        AudienceOption("Mariveles", "mariveles"),
-        AudienceOption("Morong", "morong"),
-        AudienceOption("Orani", "orani"),
-        AudienceOption("Orion", "orion"),
-        AudienceOption("Pilar", "pilar"),
-        AudienceOption("Samal", "samal")
-    )
+    // Build from shared municipality list; province-wide (null slug) is prepended by the caller
+    private val audienceOptions: List<AudienceOption> by lazy {
+        val all = mutableListOf(AudienceOption("All Municipalities (Province-wide)", null))
+        BATAAN_MUNICIPALITIES.forEach { m -> all.add(AudienceOption(m.displayName, m.slug)) }
+        all
+    }
 
     private var outbreakOptions = mutableListOf<OutbreakOption>()
 

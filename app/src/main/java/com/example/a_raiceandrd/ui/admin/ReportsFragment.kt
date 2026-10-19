@@ -32,6 +32,7 @@ import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
+import com.example.a_raiceandrd.util.BATAAN_MUNICIPALITIES
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -53,23 +54,10 @@ class ReportsFragment : Fragment() {
     private var lastPage = 1
     private var isLoading = false
 
-    private data class MuniOption(val label: String, val slug: String?)
     private data class DiseaseOption(val label: String, val id: Int?)
 
-    private val muniOptions = listOf(
-        MuniOption("Abucay", "abucay"),
-        MuniOption("Bagac", "bagac"),
-        MuniOption("Balanga", "balanga"),
-        MuniOption("Dinalupihan", "dinalupihan"),
-        MuniOption("Hermosa", "hermosa"),
-        MuniOption("Limay", "limay"),
-        MuniOption("Mariveles", "mariveles"),
-        MuniOption("Morong", "morong"),
-        MuniOption("Orani", "orani"),
-        MuniOption("Orion", "orion"),
-        MuniOption("Pilar", "pilar"),
-        MuniOption("Samal", "samal")
-    )
+    // Use shared municipality list (Group 9)
+    private val muniOptions = BATAAN_MUNICIPALITIES
 
     private var diseaseList = listOf<DiseaseDto>()
 
@@ -210,7 +198,7 @@ class ReportsFragment : Fragment() {
         val muniAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_dropdown_item_1line,
-            muniOptions.map { it.label }
+            muniOptions.map { it.displayName }
         )
         genBinding.actvGenMuni.setAdapter(muniAdapter)
         genBinding.actvGenMuni.setText("", false)

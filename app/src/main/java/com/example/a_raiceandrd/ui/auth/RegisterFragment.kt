@@ -24,6 +24,7 @@ import com.example.a_raiceandrd.databinding.FragmentRegisterBinding
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
+import com.example.a_raiceandrd.util.BATAAN_MUNICIPALITIES
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CancellationException
@@ -40,21 +41,9 @@ class RegisterFragment : Fragment() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-    // Fallback 12 Bataan municipalities (slug to display name)
-    private val defaultMunicipalities = listOf(
-        MunicipalityDto("Balanga", "balanga"),
-        MunicipalityDto("Abucay", "abucay"),
-        MunicipalityDto("Bagac", "bagac"),
-        MunicipalityDto("Dinalupihan", "dinalupihan"),
-        MunicipalityDto("Hermosa", "hermosa"),
-        MunicipalityDto("Limay", "limay"),
-        MunicipalityDto("Mariveles", "mariveles"),
-        MunicipalityDto("Morong", "morong"),
-        MunicipalityDto("Orani", "orani"),
-        MunicipalityDto("Orion", "orion"),
-        MunicipalityDto("Pilar", "pilar"),
-        MunicipalityDto("Samal", "samal")
-    )
+    // Use shared municipality list — single source of truth (Group 9)
+    private val defaultMunicipalities: List<MunicipalityDto> =
+        BATAAN_MUNICIPALITIES.map { MunicipalityDto(it.displayName, it.slug) }
 
     private var currentMunicipalities: List<MunicipalityDto> = defaultMunicipalities
     private var selectedSlug: String? = null

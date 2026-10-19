@@ -5,6 +5,8 @@ import com.example.a_raiceandrd.data.repository.api.ScanItem
 import com.example.a_raiceandrd.model.AlertItem
 import com.example.a_raiceandrd.ui.home.ActivityItem
 import com.example.a_raiceandrd.ui.home.ActivityType
+import com.example.a_raiceandrd.util.isHealthy
+import com.example.a_raiceandrd.util.isUnrecognised
 import com.google.gson.JsonElement
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -86,13 +88,23 @@ fun AlertDto.toActivityItem() = ActivityItem(
 )
 
 fun ScanItem.toActivityItem(): ActivityItem {
-    val result = disease?.name ?: "No disease detected"
+    val healthy = isHealthy(disease?.name)
+    val unrecognised = isUnrecognised(disease)
+    val result = when {
+        healthy      -> "Healthy Rice Plant"
+        unrecognised -> "Unidentified Plant"
+        else         -> disease?.name ?: "Unknown"
+    }
     val pct = confidence?.let { " (${(it * 100).toInt()}%)" }.orEmpty()
-    val time = formatTime(createdAt).ifEmpty { "SCAN RESULT" }
+    val time = formatTime(createdAt)
     return ActivityItem(
         title = "Scan: $result$pct",
         timeAgo = time,
-        type = if (disease == null) ActivityType.OK else ActivityType.WARNING,
+        type = when {
+            healthy      -> ActivityType.OK
+            unrecognised -> ActivityType.INFO
+            else         -> ActivityType.WARNING
+        },
         id = "scan-${id ?: 0}"
     )
 }

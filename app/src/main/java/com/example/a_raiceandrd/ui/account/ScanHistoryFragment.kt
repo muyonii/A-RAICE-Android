@@ -22,6 +22,7 @@ import com.example.a_raiceandrd.databinding.FragmentScanHistoryBinding
 import com.example.a_raiceandrd.ui.auth.FLogin
 import com.example.a_raiceandrd.ui.auth.Role
 import com.example.a_raiceandrd.util.errorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -191,15 +192,24 @@ class ScanHistoryFragment : Fragment() {
                     binding.tvEmptyDesc.setText(R.string.No_Scans_Sub)
                     binding.btnEmptyRetry.isVisible = false
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
+                if (_binding == null) return@launch
                 if (!append && allScans.isEmpty()) {
+                    // First load failed: show empty/error state
                     binding.layoutEmpty.isVisible = true
                     binding.tvEmptyTitle.setText(R.string.Failed_To_Load_Scans)
                     binding.tvEmptyDesc.text = errorMessage(e)
                     binding.btnEmptyRetry.isVisible = true
+                } else if (append) {
+                    // Pagination failure: show a toast but keep existing data visible
+                    Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                // If !append && allScans.isNotEmpty() (refresh failed), show toast only
+                else {
+                    Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                }
             } finally {
                 isLoading = false
                 if (_binding != null) {
