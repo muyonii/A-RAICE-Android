@@ -276,4 +276,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+
+    <!-- Item 10: Full-failure error overlay (gone by default) -->
+    <LinearLayout
+        android:id="@+id/homeErrorBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvHomeError"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/manrope"
+            android:text="@string/Home_Error_All_Failed"
+            android:textAlignment="center"
+            android:textColor="@color/text_secondary"
+            android:textSize="15sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnHomeRetry"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/ency_retry" />
+
+    </LinearLayout>
+
 </FrameLayout>

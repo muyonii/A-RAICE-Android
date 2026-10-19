@@ -25,6 +25,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.a_raiceandrd.R
 import com.example.a_raiceandrd.data.repository.api.ApiClient
+import com.example.a_raiceandrd.data.repository.api.ScanDto
 import com.example.a_raiceandrd.databinding.FragmentScanBinding
 import com.example.a_raiceandrd.util.ImageUtils
 import com.example.a_raiceandrd.util.errorMessage
@@ -120,36 +121,47 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
             })
     }
 
+    private data class ScanResult(val scan: ScanDto, val imagePath: String)
+
     private fun submit(uri: Uri) {
         setLoading(true)
         b.tvStatus.text = getString(R.string.AI_Warmup_Hint)
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val (scan, imagePath) = withContext(Dispatchers.IO) {
-                    val resolver = requireContext().contentResolver
+                val result: ScanResult? = withContext(Dispatchers.IO) {
+                    // Item 3: Always process through ImageUtils — decode with sample, EXIF rotate,
+                    // scale to max 1280px, compress as JPEG ~85 quality, cap at 4.5 MB.
+                    // Works for JPEG, PNG, WebP, and HEIC/HEIF gallery sources.
+                    val bytes = try {
+                        ImageUtils.uriToJpegBytes(requireContext(), uri)
+                    } catch (_: Exception) {
+                        return@withContext null
+                    }
 
-                    // send the original file unchanged unless it is over the 5 MB limit
-                    val raw = resolver.openInputStream(uri)!!.use { it.readBytes() }
-                    val bytes = if (raw.size <= 5_000_000) raw
-                    else ImageUtils.uriToJpegBytes(requireContext(), uri)
-
-                    val mime = if (bytes === raw) resolver.getType(uri) ?: "image/jpeg"
-                    else "image/jpeg"
-
-                    // keep a local copy to show on the results screen
+                    // Keep the local preview copy
                     val file = File(requireContext().cacheDir, "scan_${System.currentTimeMillis()}.jpg")
                     file.writeBytes(bytes)
 
                     val part = MultipartBody.Part.createFormData(
-                        "image", "leaf.jpg", bytes.toRequestBody(mime.toMediaType())
+                        "image", "leaf.jpg",
+                        bytes.toRequestBody("image/jpeg".toMediaType())
                     )
                     // Farmers must NOT send GPS or farmer_id
-                    ApiClient.service.submitScan(part) to file.absolutePath
+                    val scan = ApiClient.service.submitScan(part)
+                    ScanResult(scan, file.absolutePath)
+                }
+
+                if (_b == null) return@launch
+
+                if (result == null) {
+                    // Decode failure — show friendly message
+                    toast(getString(R.string.Error_Image_Decode))
+                    return@launch
                 }
 
                 // If scan status failed, show retry dialog
-                if (scan.status.equals("failed", ignoreCase = true)) {
+                if (result.scan.status.equals("failed", ignoreCase = true)) {
                     showFailedDialog(uri)
                     return@launch
                 }
@@ -158,14 +170,15 @@ class ScanFragment : Fragment(R.layout.fragment_scan) {
                 prefs.edit().putBoolean("has_scanned_before", true).apply()
 
                 val args = Bundle().apply {
-                    putInt("scanId", scan.id ?: 0)
+                    putInt("scanId", result.scan.id ?: 0)
                     putLong("scannedAt", System.currentTimeMillis())
-                    putString("imagePath", imagePath)
+                    putString("imagePath", result.imagePath)
                 }
                 findNavController().navigate(R.id.action_scan_to_scanResultsFragment, args)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
-                toast(errorMessage(e))
+                if (_b != null) toast(errorMessage(e))
             } finally {
                 if (_b != null) setLoading(false)
             }

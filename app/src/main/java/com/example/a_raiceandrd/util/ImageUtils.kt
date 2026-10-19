@@ -48,8 +48,8 @@ object ImageUtils {
         }
         val bitmap = Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
 
-        // compress until under the size limit
-        var quality = 90
+        // compress until under the size limit (start at 85 as specified)
+        var quality = 85
         var bytes: ByteArray
         do {
             bytes = ByteArrayOutputStream().also {

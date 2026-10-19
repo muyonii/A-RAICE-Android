@@ -31,12 +31,11 @@ import com.example.a_raiceandrd.databinding.DialogEditProfileBinding
 import com.example.a_raiceandrd.databinding.FragmentProfileBinding
 import com.example.a_raiceandrd.ui.auth.FLogin
 import com.example.a_raiceandrd.ui.auth.Role
+import com.example.a_raiceandrd.util.LocationHelper
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.parseFieldErrors
 import com.example.a_raiceandrd.util.BATAAN_MUNICIPALITIES
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,7 +48,6 @@ class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentUser: UserDto? = null
 
     // Use shared municipality list — single source of truth (Group 9)
@@ -82,7 +80,7 @@ class ProfileFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
 
         bindInitialUser()
         loadUserProfile()
@@ -359,22 +357,36 @@ class ProfileFragment : Fragment() {
         }
     }
 
-    @SuppressLint("MissingPermission")
+    /** Item 5: Uses LocationHelper for fresh fix with fallback and timeout. Cancels via lifecycleScope. */
     private fun requestLocationForDialog() {
-        fusedLocationClient.lastLocation.addOnSuccessListener { loc ->
-            dialogBindingForLocation?.let { d ->
-                if (loc != null) {
-                    d.etEditLat.setText(String.format(Locale.US, "%.6f", loc.latitude))
-                    d.etEditLong.setText(String.format(Locale.US, "%.6f", loc.longitude))
-                    d.tilEditLat.error = null
-                    d.tilEditLong.error = null
+        val ctx = context ?: return
+        val dBinding = dialogBindingForLocation ?: return
+        dBinding.btnEditUseLocation.isEnabled = false
+        dBinding.btnEditUseLocation.setText(R.string.Location_Fetching)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = LocationHelper.fetchLocation(ctx)
+            val b = dialogBindingForLocation
+            if (_binding == null || b == null) return@launch
+            b.btnEditUseLocation.isEnabled = true
+            b.btnEditUseLocation.setText(R.string.Use_Current_Location)
+            when (result) {
+                is LocationHelper.LocationResult.Success -> {
+                    val loc = result.location
+                    b.etEditLat.setText(String.format(Locale.US, "%.6f", loc.latitude))
+                    b.etEditLong.setText(String.format(Locale.US, "%.6f", loc.longitude))
+                    b.tilEditLat.error = null
+                    b.tilEditLong.error = null
                     Toast.makeText(requireContext(), R.string.Location_Fetched, Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), R.string.Location_Unavailable, Toast.LENGTH_SHORT).show()
                 }
+                LocationHelper.LocationResult.PermissionDenied ->
+                    Toast.makeText(requireContext(), R.string.Location_Permission_Denied, Toast.LENGTH_LONG).show()
+                LocationHelper.LocationResult.ServicesOff ->
+                    Toast.makeText(requireContext(), R.string.Location_Services_Off, Toast.LENGTH_LONG).show()
+                LocationHelper.LocationResult.Timeout ->
+                    Toast.makeText(requireContext(), R.string.Location_Timeout, Toast.LENGTH_LONG).show()
+                LocationHelper.LocationResult.Unavailable ->
+                    Toast.makeText(requireContext(), R.string.Location_Unavailable_Type, Toast.LENGTH_LONG).show()
             }
-        }.addOnFailureListener {
-            Toast.makeText(requireContext(), R.string.Location_Unavailable, Toast.LENGTH_SHORT).show()
         }
     }
 

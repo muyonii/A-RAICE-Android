@@ -6,6 +6,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
@@ -22,6 +25,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.materialswitch.MaterialSwitch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -80,8 +86,10 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.navController
 
+        // Item 8b: re-set onUnauthorized in onCreate (will be cleared in onDestroy).
         ApiClient.onUnauthorized = {
             runOnUiThread {
+                clearAlertsBadge()
                 if (navController.currentDestination?.id != R.id.loginFragment) {
                     navController.navigate(R.id.action_global_loginFragment)
                 }
@@ -99,6 +107,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.drawerLogout).setOnClickListener {
             drawer.closeDrawer(GravityCompat.START, false)
+            clearAlertsBadge()          // Item 2: clear badge on logout
             FLogin.logout()
             navController.navigate(R.id.action_global_loginFragment)
         }
@@ -153,6 +162,36 @@ class MainActivity : AppCompatActivity() {
             )
             if (FLogin.getCurrentRole() != null) bindDrawer(isAdmin)
         }
+
+        // Item 2: App-level unread-alerts poller — runs every 60 s while STARTED and session exists.
+        // Skips polling on login/register screens. Failures are silent (badge keeps last value).
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                while (true) {
+                    pollUnreadAlertsBadge()
+                    delay(BADGE_POLL_MS)
+                }
+            }
+        }
+    }
+
+    /** Item 2: Fetches unread count and updates the badge silently. */
+    private suspend fun pollUnreadAlertsBadge() {
+        val dest = navController.currentDestination?.id
+        // Skip on auth screens where no session exists yet
+        if (dest == R.id.loginFragment || dest == R.id.registerFragment) return
+        if (!FLogin.hasSession()) return
+        try {
+            val page = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                ApiClient.service.getAlerts(unread = 1, page = 1)
+            }
+            val total = page.total ?: 0
+            setAlertsUnreadCount(total)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Silent — keep whatever count was set last
+        }
     }
 
     fun refreshDrawer() {
@@ -173,6 +212,16 @@ class MainActivity : AppCompatActivity() {
             } else {
                 targetNav.removeBadge(itemId)
             }
+        }
+    }
+
+    /** Item 2: Clear badge on both nav bars (called on logout and on 401). */
+    fun clearAlertsBadge() {
+        runOnUiThread {
+            val userNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+            val adminNav = findViewById<BottomNavigationView>(R.id.bottom_navigation_ad)
+            userNav.removeBadge(R.id.notif)
+            adminNav.removeBadge(R.id.adnotif)
         }
     }
 
@@ -224,5 +273,15 @@ class MainActivity : AppCompatActivity() {
                     view.alpha = 1f
                 }.start()
         }
+    }
+
+    override fun onDestroy() {
+        // Item 8b: Clear the lambda to avoid the Activity being held in memory.
+        ApiClient.onUnauthorized = null
+        super.onDestroy()
+    }
+
+    private companion object {
+        const val BADGE_POLL_MS = 60_000L
     }
 }

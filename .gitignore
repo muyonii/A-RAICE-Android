@@ -17,3 +17,6 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+# Scratch / prompt files — never commit these
+scratch_prompt.txt
+*.prompt.txt
