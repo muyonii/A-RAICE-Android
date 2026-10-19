@@ -87,6 +87,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Show the last known data instantly, then refresh in the background.
         render()
 
+        // Item 10: Retry button dismisses error overlay and reloads
+        b.btnHomeRetry.setOnClickListener {
+            b.homeErrorBanner.isVisible = false
+            viewLifecycleOwner.lifecycleScope.launch { load() }
+        }
+
         // Refresh now, then every 30s while the screen is visible ("real-time" updates).
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -109,11 +115,25 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private suspend fun load() = coroutineScope {
+        // Item 10: Track failures across the 4 concurrent calls
+        var failures = 0
+        val mu = java.util.concurrent.atomic.AtomicInteger(0)
+        suspend fun countFailure() { mu.incrementAndGet().also { failures = it } }
+
         // All four requests run at the same time; each one updates the screen as soon as it finishes.
-        launch { safe("user") { api.getUser() }?.let { Cache.user = it; render() } }
-        launch { safe("alerts") { api.getAlerts().data.orEmpty() }?.let { Cache.alerts = it; render() } }
-        launch { safe("scans") { api.getScans().data.orEmpty() }?.let { Cache.scans = it; render() } }
-        launch { safe("map") { api.getMap() }?.let { Cache.map = it; render() } }
+        val j1 = launch { if (safe("user") { api.getUser() }?.also { Cache.user = it; render() } == null) countFailure() }
+        val j2 = launch { if (safe("alerts") { api.getAlerts().data.orEmpty() }?.also { Cache.alerts = it; render() } == null) countFailure() }
+        val j3 = launch { if (safe("scans") { api.getScans().data.orEmpty() }?.also { Cache.scans = it; render() } == null) countFailure() }
+        val j4 = launch { if (safe("map") { api.getMap() }?.also { Cache.map = it; render() } == null) countFailure() }
+        j1.join(); j2.join(); j3.join(); j4.join()
+
+        // Show error overlay only when ALL loads failed AND we have no cached data
+        val allFailed = mu.get() == 4
+        val noCache = Cache.user == null && Cache.alerts == null && Cache.scans == null && Cache.map == null
+        if (_b != null) {
+            b.homeErrorBanner.isVisible = allFailed && noCache
+            b.homeScroll.isVisible = !(allFailed && noCache)
+        }
     }
 
     // Draws whatever we currently have (cached or fresh). Safe to call many times.

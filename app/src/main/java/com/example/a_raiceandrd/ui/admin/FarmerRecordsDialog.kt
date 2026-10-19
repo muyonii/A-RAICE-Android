@@ -14,6 +14,7 @@ import com.example.a_raiceandrd.adapter.FarmerRecordsAdapter
 import com.example.a_raiceandrd.data.repository.api.ApiClient
 import com.example.a_raiceandrd.data.repository.api.MapFarmDto
 import com.example.a_raiceandrd.databinding.DialogFarmerRecordsBinding
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -69,19 +70,32 @@ object FarmerRecordsDialog {
         binding.loadingFarmers.isVisible = true
         binding.tvNoFarmers.isVisible = false
 
-        val scope = CoroutineScope(Dispatchers.Main + Job())
+        // Item 11: Use a Job so we can cancel it on dismiss; never touch views after dismiss.
+        val job = Job()
+        val scope = CoroutineScope(Dispatchers.Main + job)
+
+        dialog.setOnDismissListener {
+            job.cancel()
+        }
+
         scope.launch {
             try {
                 val response = withContext(Dispatchers.IO) {
                     ApiClient.service.getMap()
                 }
-                allFarms = response.farms.orEmpty()
-                binding.loadingFarmers.isVisible = false
-                filter(binding.etSearchFarmers.text?.toString().orEmpty())
+                if (!job.isCancelled) {
+                    allFarms = response.farms.orEmpty()
+                    binding.loadingFarmers.isVisible = false
+                    filter(binding.etSearchFarmers.text?.toString().orEmpty())
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                binding.loadingFarmers.isVisible = false
-                binding.tvNoFarmers.isVisible = true
-                binding.tvNoFarmers.text = errorMessage(e)
+                if (!job.isCancelled) {
+                    binding.loadingFarmers.isVisible = false
+                    binding.tvNoFarmers.isVisible = true
+                    binding.tvNoFarmers.text = errorMessage(e)
+                }
             }
         }
 

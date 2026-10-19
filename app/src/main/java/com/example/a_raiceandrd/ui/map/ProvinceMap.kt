@@ -37,6 +37,12 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
     private var isHistoryMode = false
     private var historyStatusFilter: String? = null
 
+    // Item 6: Outbreak history pagination state
+    private var historyPage = 1
+    private var historyLastPage = 1
+    private var historyLoading = false
+    private val historyItems = mutableListOf<OutbreakItem>()
+
     private val outbreakAdapter = OutbreakAdapter { item ->
         showOutbreakDetailDialog(item)
     }
@@ -48,8 +54,22 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
         setupTopBar(view, view.findViewById<NestedScrollView>(R.id.adMapScroll))
 
         b.adBataanMapView.isFarmerMode = false
-        b.rvAdnearby.layoutManager = LinearLayoutManager(requireContext())
+        val layoutManager = LinearLayoutManager(requireContext())
+        b.rvAdnearby.layoutManager = layoutManager
         b.rvAdnearby.adapter = outbreakAdapter
+
+        // Item 6: Infinite scroll for outbreak history
+        b.rvAdnearby.addOnScrollListener(object : androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: androidx.recyclerview.widget.RecyclerView, dx: Int, dy: Int) {
+                if (!isHistoryMode || dy <= 0 || historyLoading) return
+                val visible = layoutManager.childCount
+                val total = layoutManager.itemCount
+                val firstVisible = layoutManager.findFirstVisibleItemPosition()
+                if (historyPage < historyLastPage && (visible + firstVisible) >= total - 3) {
+                    loadOutbreakHistory(append = true)
+                }
+            }
+        })
 
         // Farm dot tap
         b.adBataanMapView.onFarmSelected = { farm ->
@@ -82,25 +102,25 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
                         isHistoryMode = true
                         b.historyFilterGroup.isVisible = true
                         b.adnearbyLabel.setText(R.string.Ad_Outbreak_History)
-                        loadOutbreakHistory()
+                        loadOutbreakHistory(append = false)
                     }
                 }
             }
         }
 
-        // History filter chips
+        // History filter chips — reset pagination on filter change
         b.historyFilterGroup.check(R.id.chipFilterAll)
         b.chipFilterAll.setOnClickListener {
             historyStatusFilter = null
-            loadOutbreakHistory()
+            loadOutbreakHistory(append = false)
         }
         b.chipFilterActive.setOnClickListener {
             historyStatusFilter = "active"
-            loadOutbreakHistory()
+            loadOutbreakHistory(append = false)
         }
         b.chipFilterResolved.setOnClickListener {
             historyStatusFilter = "resolved"
-            loadOutbreakHistory()
+            loadOutbreakHistory(append = false)
         }
 
         loadMapData()
@@ -185,11 +205,22 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
         b.rvAdnearby.isVisible = items.isNotEmpty()
     }
 
-    private fun loadOutbreakHistory() {
+    private fun loadOutbreakHistory(append: Boolean = false) {
+        if (historyLoading) return
+        if (!append) {
+            // Reset pagination
+            historyPage = 1
+            historyLastPage = 1
+            historyItems.clear()
+        }
+        historyLoading = true
+        val pageToLoad = if (append) historyPage + 1 else 1
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val page = ApiClient.service.getOutbreaks(page = 1, status = historyStatusFilter)
-                val items = page.data.orEmpty().map { o ->
+                val page = ApiClient.service.getOutbreaks(page = pageToLoad, status = historyStatusFilter)
+                historyPage = page.currentPage ?: pageToLoad
+                historyLastPage = page.lastPage ?: pageToLoad
+                val newItems = page.data.orEmpty().map { o ->
                     OutbreakItem(
                         id = o.id,
                         diseaseName = o.disease?.name,
@@ -200,15 +231,21 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
                         scansCount = o.scansCount
                     )
                 }
-                outbreakAdapter.submitList(items)
-                b.tvAdNoOutbreaks.isVisible = items.isEmpty()
-                b.rvAdnearby.isVisible = items.isNotEmpty()
+                historyItems.addAll(newItems)
+                if (_b != null) {
+                    outbreakAdapter.submitList(historyItems.toList())
+                    b.tvAdNoOutbreaks.isVisible = historyItems.isEmpty()
+                    b.rvAdnearby.isVisible = historyItems.isNotEmpty()
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 if (_b != null) {
                     Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                    // Existing items stay visible
                 }
+            } finally {
+                historyLoading = false
             }
         }
     }

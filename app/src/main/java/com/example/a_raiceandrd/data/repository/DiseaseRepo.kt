@@ -294,8 +294,12 @@ object DiseaseRepo {
 
     fun getByName(name: String?): Disease? {
         if (name.isNullOrBlank()) return null
-        val trimmed = name.trim().lowercase()
-        return diseases.firstOrNull { it.name.trim().lowercase() == trimmed }
+        // Item 9: normalize by lowercasing and converting spaces/hyphens to underscores
+        val normalized = name.trim().lowercase().replace(" ", "_").replace("-", "_")
+        return diseases.firstOrNull {
+            val dn = it.name.trim().lowercase().replace(" ", "_").replace("-", "_")
+            dn == normalized
+        }
     }
 
     fun getBundledDetailAsDto(id: Int, fallbackName: String? = null): DiseaseDto? {
@@ -340,14 +344,15 @@ object DiseaseRepo {
     suspend fun getDiseases(context: Context, forceRefresh: Boolean = false): List<DiseaseDto> {
         val cacheFile = File(context.filesDir, "diseases_cache.json")
         val gson = Gson()
+        val isOnline = !forceRefresh
 
-        // Cache-first: if not force-refreshing, return local cache/bundled data immediately
-        if (!forceRefresh) {
+        // Item 9: 7-day cache freshness window when online; ignore age when offline
+        val cacheValid = cacheFile.exists() &&
+            (System.currentTimeMillis() - cacheFile.lastModified() < CACHE_FRESHNESS_MS)
+
+        if (!forceRefresh && cacheValid) {
             val cached = getCachedDiseases(context)
-            if (cached.isNotEmpty()) {
-                // Silently refresh in background
-                return cached
-            }
+            if (cached.isNotEmpty()) return cached
         }
 
         try {
@@ -362,7 +367,9 @@ object DiseaseRepo {
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
-            Log.w("DiseaseRepo", "Network call getDiseases failed, falling back to cache", e)
+            Log.w("DiseaseRepo", "Network call getDiseases failed, falling back to cache/bundled", e)
+            // Item 9: offline fallback regardless of cache age
+            return getCachedDiseases(context)
         }
 
         return getCachedDiseases(context)
@@ -383,7 +390,15 @@ object DiseaseRepo {
             try {
                 val type = object : TypeToken<List<DiseaseDto>>() {}.type
                 val cachedList: List<DiseaseDto>? = gson.fromJson(listCacheFile.readText(), type)
-                val match = cachedList?.firstOrNull { it.id == id || (fallbackName != null && it.name?.equals(fallbackName, ignoreCase = true) == true) }
+                // Item 9: also try normalized name match in cache
+                val normalizedFallback = fallbackName?.trim()?.lowercase()
+                    ?.replace(" ", "_")?.replace("-", "_")
+                val match = cachedList?.firstOrNull { dto ->
+                    dto.id == id ||
+                    (fallbackName != null && dto.name?.equals(fallbackName, ignoreCase = true) == true) ||
+                    (normalizedFallback != null && dto.name?.trim()?.lowercase()
+                        ?.replace(" ", "_")?.replace("-", "_") == normalizedFallback)
+                }
                 if (match != null) return match
             } catch (_: Exception) {}
         }
@@ -407,6 +422,11 @@ object DiseaseRepo {
             Log.w("DiseaseRepo", "Network call getDisease($id) failed, falling back to cache", e)
         }
 
+        // Item 9: offline fallback regardless of cache age; bundled is last resort
         return getCachedDiseaseDetail(context, id, fallbackName)
+            ?: getBundledDetailAsDto(id, fallbackName)
     }
+
+    // Item 9: 7-day online cache freshness window
+    private const val CACHE_FRESHNESS_MS = 7L * 24 * 60 * 60 * 1000
 }

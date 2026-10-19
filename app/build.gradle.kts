@@ -31,6 +31,7 @@ android {
 
     signingConfigs {
         val keystorePropertiesFile = rootProject.file("keystore.properties")
+        val allowDebugSigned = project.findProperty("allowDebugSignedRelease") == "true"
         if (keystorePropertiesFile.exists()) {
             create("release") {
                 val props = Properties()
@@ -40,7 +41,11 @@ android {
                 keyAlias = props.getProperty("keyAlias")
                 keyPassword = props.getProperty("keyPassword")
             }
+        } else if (allowDebugSigned) {
+            // CI/dev verification only — logs a warning and uses debug key
+            println("WARNING: keystore.properties not found. Using debug signing for release (allowDebugSignedRelease=true).")
         }
+        // else: no release config created; buildTypes block will throw at config time below
     }
 
     buildTypes {
@@ -52,17 +57,47 @@ android {
                 "proguard-rules.pro"
             )
             val keystorePropertiesFile = rootProject.file("keystore.properties")
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                signingConfig = signingConfigs.getByName("debug")
+            val allowDebugSigned = project.findProperty("allowDebugSignedRelease") == "true"
+            when {
+                keystorePropertiesFile.exists() -> {
+                    signingConfig = signingConfigs.getByName("release")
+                }
+                allowDebugSigned -> {
+                    // intentional debug-key fallback for CI only
+                    signingConfig = signingConfigs.getByName("debug")
+                }
+                else -> {
+                    // Fail the build immediately instead of silently shipping an unsigned APK
+                    val releaseTask = gradle.startParameter.taskNames.any { name ->
+                        name.contains("Release", ignoreCase = true) &&
+                            (name.contains("assemble", ignoreCase = true) ||
+                             name.contains("bundle", ignoreCase = true))
+                    }
+                    if (releaseTask) {
+                        throw GradleException(
+                            "\n\n=== RELEASE SIGNING REQUIRED ===\n" +
+                            "keystore.properties was not found in the project root.\n" +
+                            "Create it with the following keys:\n\n" +
+                            "  storeFile=path/to/your.keystore\n" +
+                            "  storePassword=YOUR_STORE_PASSWORD\n" +
+                            "  keyAlias=YOUR_KEY_ALIAS\n" +
+                            "  keyPassword=YOUR_KEY_PASSWORD\n\n" +
+                            "To build without a keystore (CI/dev only) add: -PallowDebugSignedRelease=true\n" +
+                            "=================================\n"
+                        )
+                    }
+                    // Non-release task (e.g. lint) — use debug key so lint can still run
+                    signingConfig = signingConfigs.getByName("debug")
+                }
             }
         }
     }
 
     lint {
-        abortOnError = false
-        checkReleaseBuilds = false
+        checkReleaseBuilds = true
+        abortOnError = true
+        baseline = file("lint-baseline.xml")
+        // Run ./gradlew updateLintBaseline to regenerate for existing warnings
     }
 
     compileOptions {

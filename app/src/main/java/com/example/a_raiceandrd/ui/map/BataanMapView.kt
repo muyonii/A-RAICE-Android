@@ -395,9 +395,14 @@ class BataanMapView @JvmOverloads constructor(
                 lastTouchX = event.x
                 lastTouchY = event.y
                 isDragging = false
-                parent?.requestDisallowInterceptTouchEvent(true)
+                // Item 7: Only trap scroll when already zoomed in — let parent handle it at 1x
+                updateScrollInterception(event)
             }
             MotionEvent.ACTION_MOVE -> {
+                // While a pinch is starting/ongoing, always trap the touch
+                if (event.pointerCount > 1 || scaleDetector.isInProgress) {
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                }
                 if (!scaleDetector.isInProgress && event.pointerCount == 1) {
                     val dx = event.x - lastTouchX
                     val dy = event.y - lastTouchY
@@ -405,6 +410,8 @@ class BataanMapView @JvmOverloads constructor(
                         isDragging = true
                     }
                     if (scaleFactor > 1.05f) {
+                        // Zoomed in: pan the map and trap the touch so parent doesn't scroll
+                        parent?.requestDisallowInterceptTouchEvent(true)
                         panX += dx
                         panY += dy
                         val maxPanX = (width * (scaleFactor - 1)) / 2f
@@ -413,6 +420,7 @@ class BataanMapView @JvmOverloads constructor(
                         panY = panY.coerceIn(-maxPanY, maxPanY)
                         invalidate()
                     }
+                    // At 1x: don't consume — parent scroll view takes over naturally
                     lastTouchX = event.x
                     lastTouchY = event.y
                 }
@@ -425,12 +433,25 @@ class BataanMapView @JvmOverloads constructor(
                     lastTouchX = event.getX(remainingIndex)
                     lastTouchY = event.getY(remainingIndex)
                 }
+                // After a pinch ends, re-evaluate whether we should hold interception
+                updateScrollInterception(event)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // Item 7: Always re-allow parent scroll when the finger lifts
                 parent?.requestDisallowInterceptTouchEvent(false)
             }
         }
         return true
+    }
+
+    /**
+     * Item 7: Only block the parent scroll view when the map is zoomed in or a pinch
+     * is active. At 1x scale a single drag should scroll the page, not the map.
+     */
+    private fun updateScrollInterception(event: MotionEvent) {
+        val zoomed = scaleFactor > 1.05f
+        val pinching = event.pointerCount > 1 || scaleDetector.isInProgress
+        parent?.requestDisallowInterceptTouchEvent(zoomed || pinching)
     }
 
     override fun performClick(): Boolean {

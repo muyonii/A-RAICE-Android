@@ -61,15 +61,26 @@ class LoginFragment : Fragment() {
                 FLogin.updateCurrentUser(user)
                 val role = FLogin.getCurrentRole()
                 navigateToRoleDestination(role)
+            } catch (e: CancellationException) {
+                // View destroyed while checking — do not navigate
+                throw e
             } catch (e: HttpException) {
                 if (e.code() == 401) {
                     FLogin.clearSessionLocally()
-                    setLoading(false)
+                    if (_binding != null) {
+                        setLoading(false)
+                        // Show a brief message so the user knows why they're still on login
+                        android.widget.Toast.makeText(
+                            requireContext(),
+                            getString(R.string.Error_Session_Expired),
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 } else {
                     // Non-401 server error: keep session and proceed
                     navigateToRoleDestination(FLogin.getCurrentRole())
                 }
-            } catch (_: IOException) {
+            } catch (_: java.io.IOException) {
                 // Offline / network failure: keep the saved session and enter app
                 navigateToRoleDestination(FLogin.getCurrentRole())
             } catch (_: Exception) {
@@ -135,6 +146,8 @@ class LoginFragment : Fragment() {
     }
 
     private fun navigateToRoleDestination(role: Role?) {
+        // Guard: don't navigate if the view is already gone
+        if (_binding == null) return
         when (role) {
             Role.FARMER -> findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
             Role.ADMIN -> findNavController().navigate(R.id.action_loginFragment_to_adHomeFragment)

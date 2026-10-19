@@ -305,4 +305,19 @@
     <string name="ency_retry">Retry</string>
     <string name="AdGenerate_Report">Generate report</string>
     <string name="Report_Municipality_All">All Municipalities</string>
+
+    <!-- Item 5: Location helper strings -->
+    <string name="Location_Fetching">Fetching your location…</string>
+    <string name="Location_Services_Off">Location services are off. You can type your coordinates manually.</string>
+    <string name="Location_Timeout">Could not get location in time. Enter coordinates manually.</string>
+    <string name="Location_Unavailable_Type">Location unavailable. Enter coordinates manually.</string>
+
+    <!-- Item 3: Image processing -->
+    <string name="Error_Image_Decode">Could not read the selected image. Please choose a different photo.</string>
+
+    <!-- Item 10: Home screen error states -->
+    <string name="Home_Error_Alerts_Load">Could not load alerts</string>
+    <string name="Home_Error_Alerts_Retry">Tap to retry</string>
+    <string name="Home_Error_All_Failed">Unable to load data. Check your connection and retry.</string>
+    <string name="Home_Offline_Note">Showing cached data (offline)</string>
 </resources>
