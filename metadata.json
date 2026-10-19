@@ -1,0 +1,6 @@
+{
+  "name": "A-RAICE",
+  "description": "Rice disease detection and decision support for Bataan rice farms",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
