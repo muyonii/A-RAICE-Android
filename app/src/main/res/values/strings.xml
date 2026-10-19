@@ -287,4 +287,21 @@
     <string name="Error_Network">No internet connection.</string>
     <string name="Error_Generic">Something went wrong. Please try again.</string>
     <string name="Error_No_Dialer">No app found to place phone calls.</string>
+
+    <!-- Restored: removed by accident in 986394b but still referenced -->
+    <string name="Filter_Unread_Only">Unread only</string>
+    <string name="Encyclopedia">Encyclopedia</string>
+    <string name="Ency_Sub">Rice disease reference library</string>
+    <string name="ency_history">History</string>
+    <string name="ency_causes">Causes</string>
+    <string name="ency_symptoms">Symptoms</string>
+    <string name="ency_prevention">Prevention</string>
+    <string name="ency_treatment">Treatment</string>
+    <string name="ency_view_more">Read more →</string>
+    <string name="ency_search_hint">Search diseases, symptoms, causes...</string>
+    <string name="ency_no_results">No diseases found matching your search</string>
+    <string name="ency_load_error">Could not load disease information</string>
+    <string name="ency_retry">Retry</string>
+    <string name="AdGenerate_Report">Generate report</string>
+    <string name="Report_Municipality_All">All Municipalities</string>
 </resources>
