@@ -1,0 +1,123 @@
+<USER_REQUEST>
+You are a senior Android engineer. Fix the remaining bugs in the A-RAICE Android app (Kotlin, Fragments + Navigation, ViewBinding, Retrofit + Gson + OkHttp, package com.example.a_raiceandrd, minSdk 26). Work on a new branch `fix/remaining-bugs` from the current `main`. Commit after each numbered group below. Do NOT push.
+
+## RULES
+- Minimal, targeted edits. Do not redesign screens, rename the package, change the theme, or refactor unrelated code. If a fix needs a change beyond what is described, say so in the final report instead of doing it silently.
+- Do not modify the backend. Do not add libraries (test-only deps in group 12 are the one exception).
+- All user-facing text goes in res/values/strings.xml. Keep existing code style (ui/<feature>, data/repository, adapter, util).
+- Never show raw exception text or raw JSON to the user. Use `errorMessage(e)` from util/Error.kt.
+- In every `catch (e: Exception)` inside a coroutine, rethrow `CancellationException` first, and never touch `_binding` or call `requireContext()` after the view is destroyed.
+- The app must compile after each group. Run `./gradlew assembleDebug` after each group, and `./gradlew assembleRelease testDebugUnitTest lint` at the end. If the Android SDK is not available, say so and review the code carefully instead.
+
+## STEP 0 — PREREQUISITE CHECK
+Commit 986394b removed 15 strings that are still referenced, and used `CancellationException` without importing it in LoginFragment, RegisterFragment and ProfileFragment. A fix exists (restore the strings from commit 505eb16 and add `import kotlinx.coroutines.CancellationException`). First verify that `strings.xml` contains: Filter_Unread_Only, Encyclopedia, Ency_Sub, ency_history, ency_causes, ency_symptoms, ency_prevention, ency_treatment, ency_view_more, ency_search_hint, ency_no_results, ency_load_error, ency_retry, AdGenerate_Report, Report_Municipality_All, and that those three files import CancellationException. If not, apply that fix first as its own commit. Then write a quick script that checks every `R.string.*` / `@string/*` reference resolves, and keep running it after each group.
+
+## REAL BACKEND FACTS (verified against the Laravel source; they override the earlier contract where they differ)
+- Staff `GET map` farms are FLAT: `{id, name, contact_number, barangay, municipality, lat, lng, scan:{id,disease,scan_date}|null}`. There is no `farmer` object (farmers get their own farm without name/contact). `MapFarmDto` already has `farmerName` / `farmerContact` getters that handle both shapes. Use them everywhere.
+- `POST reports` REQUIRES `municipality` (slug). Omitting it returns 422. There is no "all municipalities" report.
+- `POST login` returns 401 for wrong credentials (not 422).
+- `POST scans` runs the AI synchronously: the response status is only `completed` or `failed`, never `processing`. `disease == null` on a completed scan means the model class was not recognised. A healthy plant comes back as the real disease "Healthy Rice Plant" (id 6).
+- Paginated lists use 15 per page. `scans` and `alerts` and `outbreaks` and `reports` return `current_page`, `last_page`, `total`.
+- `GET map` `outbreaks` returns only active outbreaks (created_at is a date string). `GET outbreaks?status=active|resolved` is the history endpoint (staff only).
+
+## GROUP 1 — Admin farm names and phones (HIGH)
+The model getters exist but nothing uses them, so admin screens show "Unknown farmer" and no call button.
+- ProvinceMap.showFarmDetails: use `farm.farmerName` and `farm.farmerContact` (replace `farm.farmer?.name` and `farm.farmer?.contactNumber`).
+- FarmerRecordsAdapter: same for name and phone.
+- FarmerRecordsDialog.filter: search by `farm.farmerName`.
+- Replace the hardcoded "Unknown Farmer" and "Location not specified" with string resources.
+
+## GROUP 2 — Report generation (HIGH)
+ReportsFragment's generate dialog defaults to "All Municipalities" (slug null), which the backend rejects with 422.
+- Remove "All Municipalities" from the generate dialog options. Default to no selection with an inline error "Select a municipality" (new string) if none is chosen on submit. Keep the list screen and ReportAdapter fallback unchanged.
+- Show 422 field errors inline (use `parseFieldErrors`: keys municipality, range_start, range_end, disease_id) instead of only a toast.
+- Prevent double submit and re-enable the button on every failure path (already partly done; verify).
+
+## GROUP 3 — Healthy vs unrecognised scans, and "confirmed cases" (HIGH)
+The scan history list and results screen were fixed in 986394b. The same logic is still wrong elsewhere. Create one helper (e.g. in util/) `isHealthy(name)`, `isUnrecognised(disease)` and use it everywhere.
+- AdminRepo.getDashboardSource: `confirmedCases` must exclude scans whose disease is "Healthy Rice Plant" and exclude `disease == null`. `RecentScan` and AdHomeFragment.showRecentScans: Healthy badge only for Healthy Rice Plant; add an "Unrecognised" look (reuse the neutral chip colours and Badge_Unrecognised / Scan_Unrecognised) for `disease == null`; everything else is Detected/Outbreak.
+- util/Mappers.kt `ScanItem.toActivityItem`: replace the hardcoded "No disease detected" / "Scan: ..." / "SCAN RESULT" with strings; Healthy -> ActivityType.OK, unrecognised -> ActivityType.INFO, disease -> WARNING.
+- ScanResultsFragment: for Healthy Rice Plant, do not show the "No treatment information available." row or treatments card, and do not show the outbreak notice. Keep the encyclopedia link.
+- Replace the hardcoded "No treatment information available." with a string.
+
+## GROUP 4 — Farmer map must not say "safe" when offline (HIGH)
+DiseaseMapFragment.loadData swallows a failed `getMap()` and shows an all-green map with "No outbreaks in <area>". That is a false "safe" for a disease app.
+- On failure of `getMap()`: hide the outbreak list, show an error state with `errorMessage(e)` and a Retry button (add the views to fragment_disease_map.xml, matching existing error-state style used in fragment_scan_history.xml). Do not apply severities or the "no outbreaks" text.
+- A failed `getUser()` alone must not block the map; just skip the highlight/farm dot.
+- If cached data from a previous successful load exists in memory, you may show it with a small "Offline — showing last data" label.
+
+## GROUP 5 — Raw error text and missing retries (MEDIUM)
+Replace every place that shows `e.message` / `e.localizedMessage` or a hardcoded failure string with `errorMessage(e)` or a string resource, and give list screens a retry action:
+- BroadcastFragment.loadAlertsHistory (`e.localizedMessage`) and loadMapOutbreaks (silent catch: leave outbreak dropdown at "None" but do not crash).
+- ReportsFragment.loadReports (`e.localizedMessage`): add a Retry button next to `tvNoReports`.
+- FarmerRecordsDialog (`e.localizedMessage`): show errorMessage + Retry.
+- ProvinceMap.loadMapData (`e.message`) and loadOutbreakHistory ("Failed to load outbreak history"): use errorMessage; show a retry affordance in the existing empty-state view.
+- AdHomeViewModel (`e.message ?: "Couldn't load the dashboard"`): expose an error string via errorMessage; AdHomeFragment shows an error state with Retry (a simple card/TextView + button; keep the Toast only as a supplement).
+- AlertsFragment.loadAlerts: currently only `Log.e`. Show an error state with Retry when the list is empty and a Toast when not.
+- Make sure no toast ever fires after the view is destroyed (use `_binding != null` or `isAdded` checks) and that CancellationException is rethrown everywhere (grep `catch (e: Exception)` and `catch (_: Exception)` inside coroutines).
+
+## GROUP 6 — Alerts behaviour, farmer and staff (MEDIUM)
+AlertsFragment (farmer):
+- The 60 s poll calls `loadAlerts(reset = true)` and throws away pages the user scrolled to. Make the poll refresh only if the user is on page 1 / at the top, otherwise skip it. Remove the duplicate load on onResume vs the repeatOnLifecycle loop (one of them is enough).
+- Toggling the "Unread only" chip while a load is in flight is silently ignored. Keep a `loadJob`, cancel it on reset, and reload.
+- Mark-read: on failure, roll back the optimistic change and show a Toast.
+- Unread badge: `MainActivity.setAlertsUnreadCount` is only called from AlertsFragment, so the badge is empty until the tab is opened. Also fetch `getAlerts(unread = 1, page = 1).total` after login/session restore and on HomeFragment load (silent on failure), for both roles.
+BroadcastFragment (admin alerts tab) is missing what the alerts workstream promised for staff:
+- Make the "recent alerts" history paginated (infinite scroll or "Load more"), add pull-to-refresh, refresh on resume, mark-as-read on tap (`POST alerts/{id}/read`), and an unread-only chip, reusing AlertAdapter and the same logic as AlertsFragment. Update the badge on `adnotif`.
+- Municipality labels in the audience dropdown are hardcoded: move to the shared list from group 9.
+
+## GROUP 7 — Admin dashboard numbers (MEDIUM)
+AdminRepo.loadAllScans/getDashboardSource:
+- `totalScans` must use the paginator `total` from the first page response (not the count of fetched rows, which is capped by MAX_PAGES).
+- Loop by `last_page` instead of probing for an empty page (this removes the extra request). Keep the page cap and keep what the recent-scans list needs (only the newest few scans), so the dashboard does not fetch 20 pages just to show 4 rows. Prefer: page 1 for total + recent scans; keep the existing cap only if another stat truly needs more pages.
+- `farmersMonitored` should be the number of farms from `/map` (`farms.size`), not distinct farmers who have scanned.
+- Do not refetch on every return to AdHome: keep the loaded data in the ViewModel (scope the ViewModel to the activity, or only call `load()` when no data yet, plus pull-to-refresh or a refresh button).
+
+## GROUP 8 — Map interaction (MEDIUM)
+- BataanMapView: deselecting a municipality (second tap) does not call `onMunicipalitySelected`, so the hotspot / "Nearby" lists stay filtered. Change the callback to `(String?) -> Unit`, invoke it with null on deselect, and update DiseaseMapFragment and ProvinceMap (null = show all / the farmer's own area).
+- ProvinceMap outbreak history only loads page 1: add paging (load next page when the list is scrolled to the end, using `last_page`).
+- ProvinceMap: the "Mark as resolved" confirm dialog uses `android.R.string.cancel`; replace with the app's own Cancel string for consistency. After a 409 (already resolved), also refresh the lists.
+- Dialer intents (ProvinceMap and FarmerRecordsAdapter): use `Uri.fromParts("tel", phone, null)` and catch `ActivityNotFoundException` with a short Toast (new string).
+
+## GROUP 9 — Hardcoded strings and duplicated municipality lists (MEDIUM)
+Move all remaining hardcoded user-facing English into strings.xml, with format args where needed:
+- ReportDetailDialog ("None", "Unknown", "$count cases"), ReportAdapter ("None"), ProvinceMap (dialog labels "Municipality:", "Severity:", "Status:", "Reported:", "Associated Scans:", "Brgy.", "Last Scan:", "No scan records", "Outbreak Details", "Unknown"), OutbreakAdapter ("RESOLVED", "ACTIVE"), AdminRepo ("Unknown farmer"), Mappers (see group 3), HomeFragment (risk labels "HIGH/MODERATE/LOW/SAFE"), BroadcastFragment ("Unknown disease", "Province", audience labels), Error.kt (all messages: since errorMessage has no Context, add an overload `errorMessage(context, e)` that returns string resources, and migrate callers; keep the old signature only if tests need it, else remove).
+- The 12 Bataan municipalities are duplicated in RegisterFragment, ProfileFragment, BroadcastFragment and ReportsFragment. Create one shared helper (e.g. util/Municipalities.kt: slug + display name, "All" option handled by the caller) and use it in all four.
+- Delete the unused strings: AdAlerts, AdAlerts_Sub, AdReport, AdReport_Sub, Barangay_hint, Broadcast_Audience_All, Broadcast_Sending, Drawer_Resources, Drawer_Soon, Farm_Details, Healthy, Latitude_hint, Logging_In, Longitude_hint, New_Password_hint, Profile, Registering, Report_Generating, Scans_Soon, Updating_Password, Updating_Profile, Validating_Session. Re-verify each is unused (grep Kotlin and XML) before deleting.
+
+## GROUP 10 — Session handling and caching (LOW-MEDIUM)
+- ApiClient.onUnauthorized is a static lambda that captures the Activity and is never cleared (leak). Remove the callback; instead collect `ApiClient.unauthorizedEvents` in MainActivity with `lifecycleScope` + `repeatOnLifecycle(STARTED)` and navigate to `action_global_loginFragment` there (check `currentDestination` first). Make `unauthorizedEvents` replay 1 (`replay = 1`, call `resetReplayCache()` after handling) so a 401 that fires while the app is in the background is not lost.
+- The 401-skip check in ApiClient uses `endsWith("login")` / `endsWith("logout")`. Compare the last path segment exactly instead (`origRequest.url.pathSegments.last()`).
+- DiseaseRepo.getDiseases is cache-first but never refreshes (its comment says "silently refresh in background"). In EncyListFragment: render the cached/bundled list immediately, then call `getDiseases(forceRefresh = true)` once and update the list if it succeeds (no error UI if it fails and a list is already shown). Same for the detail screen (already fetches live after the local bind; just keep it).
+- DiseaseRepo.getBundledDetailAsDto / bundled lookups: prefer matching by disease name over id, since the bundled ids only match the server because the seeder is alphabetical.
+- ScanFragment: temp files `leaf_*.jpg` / `scan_*.jpg` are cleaned after 2 h on screen open; also delete the captured `leaf_*.jpg` right after it is read into memory in `submit()`.
+
+## GROUP 11 — Map view polish (LOW)
+BataanMapView:
+- After a pinch, lifting one finger makes the pan jump: reset `lastTouchX/Y` on `ACTION_POINTER_UP` (using the remaining pointer) and when the scale gesture ends.
+- Y pan limit uses `width`; use `height` for Y and clamp using the real scaled content size.
+- `resources.displayMetrics.scaledDensity` is deprecated: use `TypedValue.applyDimension(COMPLEX_UNIT_SP, ...)`.
+- Override `performClick()` and call it from the tap handler for accessibility.
+
+## GROUP 12 — Build, lint, tests (LOW, do last)
+- app/build.gradle.kts: the release build silently falls back to the DEBUG signing config when keystore.properties is missing. Remove that fallback (leave the release APK unsigned when there is no keystore, and print a Gradle warning). Keep reading keystore.properties when it exists.
+- Remove `lint { abortOnError = false; checkReleaseBuilds = false }`. Run `./gradlew lint`, fix real errors, and only add a `lint-baseline.xml` for pre-existing warnings you do not fix (mention it in the report).
+- proguard-rules.pro: it blanket-keeps all of retrofit2, okhttp3 and Glide, which defeats shrinking. Retrofit, OkHttp and Glide ship their own consumer rules. Narrow the file to: keepattributes (Signature, *Annotation*, Exceptions, EnclosingMethod, SourceFile/LineNumberTable), the Gson model keeps for `data.repository.api` and `model` packages, and the Gson TypeAdapter keeps. Verify with `./gradlew assembleRelease`; if the SDK is not available, leave the file as it is and say so.
+- Tests (JVM, src/test): delete the placeholder ExampleUnitTest. Add cases to ApiModelsDeserializationTest for: diseases list (14 items incl. "Healthy Rice Plant", treatments_count), disease detail with `treatments[]` (types chemical/biological/cultural/organic) and history/sources, scan detail with `top_3` and `outbreak`, a scan with `disease: null`, the staff `/map` farm in FLAT shape (name, contact_number) via `farmerName`/`farmerContact`, a farmer `/map` farm without name. Add an ErrorTest for `parseFieldErrors` and `errorMessage` (422 with errors map, 422 with only message, 401 login vs non-login, 409, 429, SocketTimeoutException, IOException). Error.kt uses org.json, which is stubbed in plain JVM tests, so add `testImplementation("org.json:json:20231013")`.
+- README: add a short "Known backend behaviours" section listing the facts above (flat staff map farms, reports need a municipality, login 401, disease null = unrecognised).
+
+## FINAL REPORT
+List: changed files per group; build / lint / test results (or that the SDK was unavailable); any contract-vs-real-API difference you found that is not listed above; anything you did not fix and why; and a manual QA checklist limited to the changed behaviour (admin farmer records + call, generate report, healthy/unrecognised scan badges, farmer map offline, alerts pagination/unread/badge, broadcast history, dashboard totals, map deselect, logout and 401 redirect).
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-19T08:58:41+08:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\Admin\Documents\GitHub\A-RAICE-Android\app\src\main\res\values\strings.xml (LANGUAGE_XML)
+Cursor is on line: 1
+Other open documents:
+- c:\Users\Admin\Documents\GitHub\A-RAICE-Android\app\src\main\res\values\strings.xml (LANGUAGE_XML)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from None to Claude Sonnet 4.6 (Thinking). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

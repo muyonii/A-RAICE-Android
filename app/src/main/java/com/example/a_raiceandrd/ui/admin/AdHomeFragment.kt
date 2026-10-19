@@ -25,6 +25,9 @@ import com.google.android.material.card.MaterialCardView
 import android.content.res.ColorStateList
 import com.example.a_raiceandrd.model.RecentScan
 import com.example.a_raiceandrd.MainActivity
+import com.example.a_raiceandrd.util.isHealthy
+import com.example.a_raiceandrd.util.isUnrecognised
+import com.example.a_raiceandrd.data.repository.api.DiseaseDto
 
 class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
 
@@ -165,17 +168,26 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
         for (scan in scans) {
             val row = layoutInflater.inflate(R.layout.item_recent_scan, rows, false)
 
+            // Determine scan classification using shared helpers
+            val healthy = isHealthy(scan.disease)
+            val unrecognised = scan.disease == null && !healthy
+
             val look = when {
-                scan.disease == null -> Look(R.color.tile_green, R.color.ok_green,
+                healthy -> Look(R.color.tile_green, R.color.ok_green,
                     R.color.badge_low_bg, R.color.badge_low_text, R.string.Badge_Healthy)
+                unrecognised -> Look(R.color.surface_chip, R.color.text_secondary,
+                    R.color.surface_chip, R.color.text_secondary, R.string.Badge_Unrecognised)
                 scan.inOutbreak -> Look(R.color.tile_rust, R.color.rust,
                     R.color.badge_high_bg, R.color.badge_high_text, R.string.Badge_Outbreak)
                 else -> Look(R.color.tile_gold, R.color.gold,
                     R.color.badge_moderate_bg, R.color.badge_moderate_text, R.string.Badge_Detected)
             }
 
-            row.findViewById<TextView>(R.id.scanTitle).text =
-                scan.disease ?: getString(R.string.Scans_Healthy)
+            row.findViewById<TextView>(R.id.scanTitle).text = when {
+                healthy -> getString(R.string.Scans_Healthy)
+                unrecognised -> getString(R.string.Scan_Unrecognised)
+                else -> scan.disease ?: getString(R.string.Scan_Unrecognised)
+            }
             row.findViewById<TextView>(R.id.scanSub).text =
                 getString(R.string.Scans_Sub, scan.farmer, scan.confidence)
 

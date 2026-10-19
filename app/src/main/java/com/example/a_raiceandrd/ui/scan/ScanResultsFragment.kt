@@ -23,6 +23,8 @@ import com.example.a_raiceandrd.databinding.ItemTopDiseaseBinding
 import com.example.a_raiceandrd.databinding.TreatmentItemBinding
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.formatTime
+import com.example.a_raiceandrd.util.isHealthy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -76,13 +78,9 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
                 if (_b != null) {
                     render(scan)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                if (_b != null) {
-                    showMessage(errorMessage(e))
-                    b.btnRetryScan.isVisible = true
-                }
-            } catch (e: Exception) {
-                if (e is kotlinx.coroutines.CancellationException) throw e
                 if (_b != null) {
                     showMessage(errorMessage(e))
                     b.btnRetryScan.isVisible = true
@@ -139,11 +137,29 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
         b.tvDisease.text = disease.name ?: getString(R.string.Scan_Unrecognised)
         b.tvConfidence.text = scan.confidence?.let { "${Math.round(it * 100)}%" } ?: "—"
 
-        // Outbreak association notice
-        if (scan.outbreakId != null || scan.outbreak != null) {
+        // Outbreak association notice — NOT shown for healthy
+        if (!isHealthy && (scan.outbreakId != null || scan.outbreak != null)) {
             b.cardOutbreakNotice.isVisible = true
         } else {
             b.cardOutbreakNotice.isVisible = false
+        }
+
+        // For healthy plants, skip the treatment card entirely (keep encyclopedia link)
+        if (isHealthy) {
+            b.tvTreatment.isVisible = false
+            b.treatmentCard.isVisible = false
+            // Still show encyclopedia link for healthy scans
+            val hId = disease?.id
+            if (hId != null && hId > 0) {
+                b.btnViewEncyclopedia.isVisible = true
+                b.btnViewEncyclopedia.setOnClickListener {
+                    val args = Bundle().apply { putInt("diseaseId", hId) }
+                    findNavController().navigate(R.id.action_scanResultsFragment_to_encyDetailsFragment, args)
+                }
+            } else {
+                b.btnViewEncyclopedia.isVisible = false
+            }
+            return
         }
 
         // Link to matching encyclopedia entry
@@ -193,7 +209,7 @@ class ScanResultsFragment : Fragment(R.layout.fragment_scan_results) {
 
         if (treatments.isEmpty()) {
             b.llTreatments.addView(TextView(requireContext()).apply {
-                text = "No treatment information available."
+                text = getString(R.string.No_Treatment_Info)
                 setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
             })
             return

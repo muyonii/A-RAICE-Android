@@ -7,6 +7,7 @@ import com.example.a_raiceandrd.model.ChartBar
 import com.example.a_raiceandrd.model.DashboardSource
 import com.example.a_raiceandrd.model.Outbreak
 import com.example.a_raiceandrd.model.Period
+import com.example.a_raiceandrd.util.isHealthy
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -18,7 +19,18 @@ object AdminRepo {
 
     // Loads everything from the API once.
     suspend fun getDashboardSource(): DashboardSource {
-        val scans = loadAllScans()
+        // Page 1 gives us total, last_page, and the most-recent scans
+        val page1 = ApiClient.service.getScans(1)
+        val totalScans = page1.total ?: page1.data?.size ?: 0
+        val lastPage = page1.lastPage ?: 1
+
+        // Collect all scans up to MAX_PAGES to compute confirmed-cases breakdown
+        val allScans = mutableListOf<ScanItem>()
+        allScans.addAll(page1.data.orEmpty())
+        for (p in 2..minOf(lastPage, MAX_PAGES)) {
+            allScans.addAll(ApiClient.service.getScans(p).data.orEmpty())
+        }
+
         val map = ApiClient.service.getMap()
 
         val outbreaks = map.outbreaks.orEmpty().map {
@@ -29,10 +41,12 @@ object AdminRepo {
             )
         }
 
-        val recent = scans.sortedByDescending { it.id }.take(4).map {
+        // recent scans come from page 1 (newest first from API)
+        val recent = page1.data.orEmpty().take(4).map {
             RecentScan(
                 id = it.id,
                 disease = it.disease?.name,
+                // farmerName getter handles flat-staff shape (name field) and nested shape
                 farmer = it.farmer?.name ?: "Unknown farmer",
                 confidence = ((it.confidence ?: 0.0) * 100).toInt(),
                 inOutbreak = it.outbreakId != null
@@ -40,9 +54,13 @@ object AdminRepo {
         }
 
         return DashboardSource(
-            totalScans = scans.size,
-            confirmedCases = scans.count { it.disease != null },
-            farmers = scans.mapNotNull { it.farmer?.id }.distinct().size,
+            totalScans = totalScans,
+            // confirmedCases: exclude null disease AND Healthy Rice Plant
+            confirmedCases = allScans.count { scan ->
+                scan.disease != null && !isHealthy(scan.disease.name)
+            },
+            // farmersMonitored: unique farms on the map, not distinct scanning farmers
+            farmers = map.farms.orEmpty().size,
             outbreaks = outbreaks,
             recentScans = recent
         )

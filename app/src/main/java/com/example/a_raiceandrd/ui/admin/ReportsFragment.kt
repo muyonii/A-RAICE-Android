@@ -31,8 +31,11 @@ import com.example.a_raiceandrd.ui.hideNavOnScroll
 import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
+import com.example.a_raiceandrd.util.parseFieldErrors
 import com.google.android.material.datepicker.MaterialDatePicker
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,7 +57,6 @@ class ReportsFragment : Fragment() {
     private data class DiseaseOption(val label: String, val id: Int?)
 
     private val muniOptions = listOf(
-        MuniOption("All Municipalities", null),
         MuniOption("Abucay", "abucay"),
         MuniOption("Bagac", "bagac"),
         MuniOption("Balanga", "balanga"),
@@ -176,7 +178,7 @@ class ReportsFragment : Fragment() {
             } catch (e: Exception) {
                 if (reportsList.isEmpty()) {
                     binding.tvNoReports.isVisible = true
-                    binding.tvNoReports.text = e.localizedMessage ?: "Failed to load reports"
+                    binding.tvNoReports.text = errorMessage(e)
                 }
             } finally {
                 isLoading = false
@@ -204,17 +206,18 @@ class ReportsFragment : Fragment() {
             dialog.dismiss()
         }
 
-        // Municipality dropdown
+        // Municipality dropdown - no default selection; user must pick one
         val muniAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_dropdown_item_1line,
             muniOptions.map { it.label }
         )
         genBinding.actvGenMuni.setAdapter(muniAdapter)
-        genBinding.actvGenMuni.setText(muniOptions[0].label, false)
-        var selectedMuniIndex = 0
+        genBinding.actvGenMuni.setText("", false)
+        var selectedMuniIndex = -1   // -1 = nothing selected
         genBinding.actvGenMuni.setOnItemClickListener { _, _, position, _ ->
             selectedMuniIndex = position
+            genBinding.tilGenMuni.error = null
         }
 
         // Disease dropdown
@@ -268,6 +271,13 @@ class ReportsFragment : Fragment() {
 
         // Submit
         genBinding.btnGenSubmit.setOnClickListener {
+            // Validate municipality selection
+            if (selectedMuniIndex < 0) {
+                genBinding.tilGenMuni.error = getString(R.string.Report_Select_Municipality)
+                return@setOnClickListener
+            }
+            genBinding.tilGenMuni.error = null
+
             if (selectedStart == null || selectedEnd == null) {
                 genBinding.tilGenDateRange.error = getString(R.string.Report_Date_Range_Hint)
                 return@setOnClickListener
@@ -275,6 +285,10 @@ class ReportsFragment : Fragment() {
             genBinding.tilGenDateRange.error = null
 
             val chosenMuni = muniOptions.getOrNull(selectedMuniIndex)?.slug
+            if (chosenMuni.isNullOrBlank()) {
+                genBinding.tilGenMuni.error = getString(R.string.Report_Select_Municipality)
+                return@setOnClickListener
+            }
             val chosenDisease = diseaseOptions.getOrNull(selectedDiseaseIndex)?.id
 
             genBinding.root.hideKeyboard()
@@ -294,6 +308,23 @@ class ReportsFragment : Fragment() {
 
                     loadReports(reset = true)
                     ReportDetailDialog.show(requireContext(), newReport)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: HttpException) {
+                    if (e.code() == 422) {
+                        val fieldErrors = com.example.a_raiceandrd.util.parseFieldErrors(e)
+                        fieldErrors["municipality"]?.let { genBinding.tilGenMuni.error = it }
+                        fieldErrors["range_start"]?.let { genBinding.tilGenDateRange.error = it }
+                        fieldErrors["range_end"]?.let { genBinding.tilGenDateRange.error = (genBinding.tilGenDateRange.error?.let { err -> "$err / $it" } ?: it) }
+                        val unmapped = fieldErrors.filterKeys { it !in setOf("municipality", "range_start", "range_end", "disease_id") }
+                        if (unmapped.isNotEmpty() || (fieldErrors.isEmpty())) {
+                            Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_LONG).show()
+                    }
+                    genBinding.btnGenSubmit.isEnabled = true
+                    genBinding.pbGenLoading.isVisible = false
                 } catch (e: Exception) {
                     val err = errorMessage(e)
                     Toast.makeText(requireContext(), err, Toast.LENGTH_LONG).show()

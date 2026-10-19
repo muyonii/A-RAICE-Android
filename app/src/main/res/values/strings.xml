@@ -99,6 +99,7 @@
     <string name="Filter_All_Diseases">All Diseases</string>
     <string name="View_All">View all →</string>
     <string name="Scan_Title_Format">Scan: %1$s%2$s</string>
+    <string name="No_Treatment_Info">No treatment information available.</string>
 
     <!--Alerts-->
     <string name="Alerts_Sub">Notification module — risk alerts for your plots</string>

@@ -1,9 +1,11 @@
 package com.example.a_raiceandrd.adapter
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -17,14 +19,15 @@ class FarmerRecordsAdapter : ListAdapter<MapFarmDto, FarmerRecordsAdapter.VH>(Di
     inner class VH(private val b: ItemFarmerRecordBinding) : RecyclerView.ViewHolder(b.root) {
         fun bind(item: MapFarmDto) {
             val ctx = b.root.context
-            val farmerName = item.farmer?.name?.takeIf { it.isNotBlank() } ?: ctx.getString(R.string.Farmer_Unknown)
+            // Use getters that handle both flat-staff and nested-farmer shapes
+            val farmerName = item.farmerName?.takeIf { it.isNotBlank() } ?: ctx.getString(R.string.Farmer_Unknown)
             b.tvFarmerName.text = farmerName
 
             val locParts = listOfNotNull(
                 item.barangay?.takeIf { it.isNotBlank() }?.let { "Brgy. $it" },
                 item.municipality?.replaceFirstChar { it.uppercase() }
             )
-            b.tvFarmerLocation.text = if (locParts.isNotEmpty()) locParts.joinToString(", ") else ctx.getString(R.string.Not_Set)
+            b.tvFarmerLocation.text = if (locParts.isNotEmpty()) locParts.joinToString(", ") else ctx.getString(R.string.Location_Not_Specified)
 
             val scan = item.scan
             if (scan != null) {
@@ -35,14 +38,15 @@ class FarmerRecordsAdapter : ListAdapter<MapFarmDto, FarmerRecordsAdapter.VH>(Di
                 b.tvFarmerLastScan.text = ctx.getString(R.string.No_Scans_Yet)
             }
 
-            val phone = item.farmer?.contactNumber?.trim()
+            val phone = item.farmerContact?.trim()
             if (!phone.isNullOrEmpty()) {
                 b.btnCall.isVisible = true
                 b.btnCall.setOnClickListener {
                     try {
-                        val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                        val intent = Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phone, null))
                         ctx.startActivity(intent)
-                    } catch (_: Exception) {
+                    } catch (_: ActivityNotFoundException) {
+                        Toast.makeText(ctx, R.string.Error_No_Dialer, Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {

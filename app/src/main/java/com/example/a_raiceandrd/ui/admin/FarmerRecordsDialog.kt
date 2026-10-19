@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.a_raiceandrd.util.errorMessage
 
 object FarmerRecordsDialog {
 
@@ -49,7 +50,8 @@ object FarmerRecordsDialog {
                 allFarms
             } else {
                 allFarms.filter { farm ->
-                    val name = farm.farmer?.name.orEmpty().lowercase()
+                    // farmerName getter handles flat-staff and nested-farmer shapes
+                    val name = farm.farmerName.orEmpty().lowercase()
                     val brgy = farm.barangay.orEmpty().lowercase()
                     val muni = farm.municipality.orEmpty().lowercase()
                     name.contains(q) || brgy.contains(q) || muni.contains(q)
@@ -79,7 +81,7 @@ object FarmerRecordsDialog {
             } catch (e: Exception) {
                 binding.loadingFarmers.isVisible = false
                 binding.tvNoFarmers.isVisible = true
-                binding.tvNoFarmers.text = e.localizedMessage ?: "Failed to load farmer records"
+                binding.tvNoFarmers.text = errorMessage(e)
             }
         }
 

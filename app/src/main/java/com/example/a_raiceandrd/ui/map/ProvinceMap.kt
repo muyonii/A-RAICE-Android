@@ -1,5 +1,6 @@
 package com.example.a_raiceandrd.ui.map
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -205,31 +206,36 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
     private fun showFarmDetails(farm: MapFarmDto) {
         b.cardFarmDetails.isVisible = true
 
-        val farmerName = farm.farmer?.name ?: "Unknown Farmer"
+        // farmerName handles both flat-staff (name field) and nested-farmer shapes
+        val farmerName = farm.farmerName ?: getString(R.string.Farmer_Unknown)
         b.tvFarmFarmerName.text = farmerName
 
         val loc = listOfNotNull(
             farm.barangay?.let { "Brgy. $it" },
             farm.municipality?.replaceFirstChar { it.uppercase() }
         ).joinToString(", ")
-        b.tvFarmLocation.text = if (loc.isNotBlank()) loc else "Location not specified"
+        b.tvFarmLocation.text = if (loc.isNotBlank()) loc else getString(R.string.Location_Not_Specified)
 
         val scan = farm.scan
         if (scan != null) {
             val dName = scan.disease ?: getString(R.string.Badge_Healthy)
             val dDate = scan.scanDate?.take(10) ?: ""
-            b.tvFarmLastScan.text = "Last Scan: $dName · $dDate"
+            b.tvFarmLastScan.text = getString(R.string.Last_Scan_Format, dName, dDate)
         } else {
-            b.tvFarmLastScan.text = "No scan records"
+            b.tvFarmLastScan.text = getString(R.string.No_Scans_Yet)
         }
 
-        val phone = farm.farmer?.contactNumber
+        val phone = farm.farmerContact
         if (!phone.isNullOrBlank()) {
             b.btnCallFarmer.isVisible = true
             b.btnCallFarmer.text = getString(R.string.Tap_To_Call, phone)
             b.btnCallFarmer.setOnClickListener {
-                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
-                startActivity(intent)
+                try {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", phone, null))
+                    startActivity(intent)
+                } catch (_: ActivityNotFoundException) {
+                    if (_b != null) Toast.makeText(requireContext(), R.string.Error_No_Dialer, Toast.LENGTH_SHORT).show()
+                }
             }
         } else {
             b.btnCallFarmer.isVisible = false
@@ -268,7 +274,7 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.Confirm_Resolve_Title)
             .setMessage(getString(R.string.Confirm_Resolve_Msg, municipalityName))
-            .setNegativeButton(android.R.string.cancel, null)
+            .setNegativeButton(R.string.Cancel, null)
             .setPositiveButton(R.string.Mark_As_Resolved) { _, _ ->
                 executeResolveOutbreak(outbreakId)
             }
