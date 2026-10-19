@@ -3,6 +3,7 @@ package com.example.a_raiceandrd.ui.alerts
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
@@ -18,6 +19,7 @@ import com.example.a_raiceandrd.databinding.FragmentAlertsBinding
 import com.example.a_raiceandrd.model.AlertItem
 import com.example.a_raiceandrd.ui.setupTopBar
 import com.example.a_raiceandrd.ui.showNav
+import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.toAlertItem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -78,18 +80,19 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
         // Refresh on open and every 60 seconds while visible
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                var firstRun = true
                 while (isActive) {
-                    loadAlerts(reset = true)
+                    val atTop = !binding.alertsScroll.canScrollVertically(-1)
+                    if (firstRun || atTop) {
+                        loadAlerts(reset = true)
+                        firstRun = false
+                    }
                     delay(POLL_MS)
                 }
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        loadAlerts(reset = true)
-    }
 
     private fun loadAlerts(reset: Boolean) {
         if (isLoading) return
@@ -135,6 +138,16 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load alerts", e)
+                if (_binding != null) {
+                    if (alertList.isEmpty()) {
+                        // Show error state; user can pull-to-refresh to retry
+                        binding.emptyAlertsState.isVisible = true
+                        binding.rvAlerts.isVisible = false
+                        binding.tvEmptyAlerts.text = errorMessage(e)
+                    } else {
+                        Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                    }
+                }
             } finally {
                 isLoading = false
                 _binding?.let {
@@ -187,6 +200,12 @@ class AlertsFragment : Fragment(R.layout.fragment_alerts) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "mark read failed", e)
+                // Roll back optimistic change
+                if (idx != -1 && _binding != null) {
+                    alertList[idx] = item
+                    adapter.submitList(alertList.toList())
+                    Toast.makeText(requireContext(), getString(R.string.Mark_Read_Failed), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

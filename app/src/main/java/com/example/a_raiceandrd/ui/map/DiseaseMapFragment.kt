@@ -2,6 +2,8 @@ package com.example.a_raiceandrd.ui.map
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
@@ -16,6 +18,8 @@ import com.example.a_raiceandrd.databinding.FragmentDiseaseMapBinding
 import com.example.a_raiceandrd.ui.auth.FLogin
 import com.example.a_raiceandrd.ui.setupTopBar
 import com.example.a_raiceandrd.ui.showNav
+import com.example.a_raiceandrd.util.errorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -26,6 +30,9 @@ class DiseaseMapFragment : Fragment(R.layout.fragment_disease_map) {
 
     private var allOutbreaks: List<MapOutbreakDto> = emptyList()
     private var farmerMunicipality: String? = null
+
+    // Cached data from last successful load
+    private var mapLoaded = false
 
     private val outbreakAdapter = OutbreakAdapter {
         // Tapping row in farmer view shows info (handled inline)
@@ -41,17 +48,26 @@ class DiseaseMapFragment : Fragment(R.layout.fragment_disease_map) {
         b.rvNearby.layoutManager = LinearLayoutManager(requireContext())
         b.rvNearby.adapter = outbreakAdapter
 
+        // Nullable slug: null means deselected, show farmer's own area
         b.bataanMapView.onMunicipalitySelected = { slug ->
-            showOutbreaksForArea(slug)
+            showOutbreaksForArea(slug ?: farmerMunicipality)
+        }
+
+        view.findViewById<Button>(R.id.btnMapRetry)?.setOnClickListener {
+            loadData()
         }
 
         loadData()
     }
 
     private fun loadData() {
+        val _b = _b ?: return
+        _b.mapErrorState?.isVisible = false
+        _b.nearbyCard?.isVisible = true
+
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // 1. Get farmer user info
+                // 1. Get farmer user info — failure here must NOT block the map
                 val user = try {
                     ApiClient.service.getUser()
                 } catch (e: Exception) {
@@ -67,7 +83,7 @@ class DiseaseMapFragment : Fragment(R.layout.fragment_disease_map) {
                 }
                 b.bataanMapView.setFarmerLocation(lat, lng)
 
-                // 2. Load map response
+                // 2. Load map — failure here shows error state, NOT a silent "safe" map
                 val mapResp = ApiClient.service.getMap()
 
                 val severities = mutableMapOf<String, String?>()
@@ -79,13 +95,26 @@ class DiseaseMapFragment : Fragment(R.layout.fragment_disease_map) {
                 b.bataanMapView.setSeverities(severities)
 
                 allOutbreaks = mapResp.outbreaks.orEmpty()
+                mapLoaded = true
 
                 // Default view: farmer's own municipality
                 showOutbreaksForArea(b.bataanMapView.selectedSlug ?: farmerMunicipality)
 
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                // If offline or network error, show empty gracefully
-                showOutbreaksForArea(farmerMunicipality)
+                if (_b != null) {
+                    if (mapLoaded) {
+                        // Already have data: show inline offline warning only
+                        b.tvMapOfflineWarning?.isVisible = true
+                        showOutbreaksForArea(farmerMunicipality)
+                    } else {
+                        // No data at all: show error state, hide outbreak list
+                        b.mapErrorState?.isVisible = true
+                        b.nearbyCard?.isVisible = false
+                        b.tvMapError?.text = errorMessage(e)
+                    }
+                }
             }
         }
     }

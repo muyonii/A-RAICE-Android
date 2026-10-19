@@ -59,7 +59,7 @@ class BataanMapView @JvmOverloads constructor(
 
     var isFarmerMode: Boolean = false
 
-    var onMunicipalitySelected: ((slug: String) -> Unit)? = null
+    var onMunicipalitySelected: ((slug: String?) -> Unit)? = null
     var onFarmSelected: ((farm: MapFarmDto) -> Unit)? = null
 
     // Bounding box in projected coordinates
@@ -407,19 +407,34 @@ class BataanMapView @JvmOverloads constructor(
                     if (scaleFactor > 1.05f) {
                         panX += dx
                         panY += dy
-                        val maxPan = (width * (scaleFactor - 1)) / 2f
-                        panX = panX.coerceIn(-maxPan, maxPan)
-                        panY = panY.coerceIn(-maxPan, maxPan)
+                        val maxPanX = (width * (scaleFactor - 1)) / 2f
+                        val maxPanY = (height * (scaleFactor - 1)) / 2f
+                        panX = panX.coerceIn(-maxPanX, maxPanX)
+                        panY = panY.coerceIn(-maxPanY, maxPanY)
                         invalidate()
                     }
                     lastTouchX = event.x
                     lastTouchY = event.y
                 }
             }
+            MotionEvent.ACTION_POINTER_UP -> {
+                // When one finger lifts, reset reference point to remaining pointer
+                // so the next ACTION_MOVE doesn't jump
+                val remainingIndex = if (event.actionIndex == 0) 1 else 0
+                if (remainingIndex < event.pointerCount) {
+                    lastTouchX = event.getX(remainingIndex)
+                    lastTouchY = event.getY(remainingIndex)
+                }
+            }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 parent?.requestDisallowInterceptTouchEvent(false)
             }
         }
+        return true
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
         return true
     }
 
@@ -445,14 +460,17 @@ class BataanMapView @JvmOverloads constructor(
             val poly = projectedPolygons[i]
             if (isPointInPolygon(mapX, mapY, poly)) {
                 val tappedSlug = features[i].slug
-                selectedSlug = if (selectedSlug == tappedSlug) null else tappedSlug
+                val wasSelected = selectedSlug == tappedSlug
+                selectedSlug = if (wasSelected) null else tappedSlug
                 contentDescription = if (selectedSlug != null) {
                     "${features[i].name} selected on Bataan disease map"
                 } else {
                     context.getString(R.string.DMap)
                 }
                 invalidate()
-                selectedSlug?.let { onMunicipalitySelected?.invoke(it) }
+                // Fire callback with null on deselect so callers can show all
+                onMunicipalitySelected?.invoke(selectedSlug)
+                performClick()
                 return
             }
         }
@@ -475,5 +493,9 @@ class BataanMapView @JvmOverloads constructor(
     }
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
-    private fun sp(v: Float) = v * resources.displayMetrics.scaledDensity
+    private fun sp(v: Float): Float {
+        return android.util.TypedValue.applyDimension(
+            android.util.TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics
+        )
+    }
 }

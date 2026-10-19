@@ -25,6 +25,7 @@ import com.example.a_raiceandrd.ui.showAdminNav
 import com.example.a_raiceandrd.util.errorMessage
 import com.example.a_raiceandrd.util.hideKeyboard
 import com.example.a_raiceandrd.util.toAlertItem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class BroadcastFragment : Fragment() {
@@ -162,6 +163,7 @@ class BroadcastFragment : Fragment() {
     }
 
     private fun loadAlertsHistory() {
+        if (_binding == null) return
         binding.pbHistoryLoading.isVisible = true
         binding.tvNoBroadcastHistory.isVisible = false
 
@@ -169,13 +171,19 @@ class BroadcastFragment : Fragment() {
             try {
                 val alertsPage = ApiClient.service.getAlerts(page = 1)
                 val items = alertsPage.data.orEmpty().map { it.toAlertItem() }
-                alertAdapter.submitList(items)
-                binding.tvNoBroadcastHistory.isVisible = items.isEmpty()
+                if (_binding != null) {
+                    alertAdapter.submitList(items)
+                    binding.tvNoBroadcastHistory.isVisible = items.isEmpty()
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                binding.tvNoBroadcastHistory.isVisible = true
-                binding.tvNoBroadcastHistory.text = e.localizedMessage ?: "Failed to load alerts"
+                if (_binding != null) {
+                    binding.tvNoBroadcastHistory.isVisible = true
+                    binding.tvNoBroadcastHistory.text = errorMessage(e)
+                }
             } finally {
-                binding.pbHistoryLoading.isVisible = false
+                if (_binding != null) binding.pbHistoryLoading.isVisible = false
             }
         }
     }
@@ -243,9 +251,13 @@ class BroadcastFragment : Fragment() {
 
                 binding.etBroadcastMessage.setText("")
                 loadAlertsHistory()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                val err = errorMessage(e)
-                Toast.makeText(requireContext(), err, Toast.LENGTH_LONG).show()
+                if (_binding != null) {
+                    val err = errorMessage(e)
+                    Toast.makeText(requireContext(), err, Toast.LENGTH_LONG).show()
+                }
             } finally {
                 if (_binding != null) {
                     binding.btnSendBroadcast.isEnabled = true

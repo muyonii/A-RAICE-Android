@@ -5,7 +5,9 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import com.example.a_raiceandrd.R
@@ -70,8 +72,8 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
             FarmerRecordsDialog.show(requireContext())
         }
 
-        // Data: draw whatever the ViewModel provides
-        viewModel = ViewModelProvider(this)[AdHomeViewModel::class.java]
+        // Data: scope ViewModel to activity so it survives navigation (Group 7: no re-fetch on return)
+        viewModel = ViewModelProvider(requireActivity())[AdHomeViewModel::class.java]
         val periodBtn = view.findViewById<MaterialButton>(R.id.btnPeriod)
         periodBtn.setOnClickListener { anchor ->
             val popup = PopupMenu(requireContext(), anchor)
@@ -98,6 +100,7 @@ class AdHomeFragment : Fragment(R.layout.fragment_ad_home) {
         styleCard(view, R.id.cardConfirmed, R.drawable.ic_warning, R.color.tile_rust, R.color.rust)
         styleCard(view, R.id.cardActive, R.drawable.ic_pin, R.color.tile_sky, R.color.sky)
         styleCard(view, R.id.cardFarmers, R.drawable.ic_people, R.color.tile_green, R.color.ok_green)
+        // load() uses forceRefresh=false by default: no re-fetch if data is already loaded
         viewModel.load()
     }
 

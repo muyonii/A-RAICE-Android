@@ -21,7 +21,9 @@ import com.example.a_raiceandrd.data.repository.api.MapResponseDto
 import com.example.a_raiceandrd.databinding.FragmentProvinceMapBinding
 import com.example.a_raiceandrd.ui.setupTopBar
 import com.example.a_raiceandrd.ui.showAdminNav
+import com.example.a_raiceandrd.util.errorMessage
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import java.util.Locale
@@ -58,7 +60,7 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
             b.cardFarmDetails.isVisible = false
         }
 
-        // Municipality polygon tap
+        // Municipality polygon tap — null means deselect → show all hotspots
         b.adBataanMapView.onMunicipalitySelected = { slug ->
             if (!isHistoryMode) {
                 filterHotspotsByMunicipality(slug)
@@ -120,8 +122,12 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
                 if (!isHistoryMode) {
                     displayHotspots()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), e.message ?: "Failed to load map data", Toast.LENGTH_SHORT).show()
+                if (_b != null) {
+                    Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -197,8 +203,12 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
                 outbreakAdapter.submitList(items)
                 b.tvAdNoOutbreaks.isVisible = items.isEmpty()
                 b.rvAdnearby.isVisible = items.isNotEmpty()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Failed to load outbreak history", Toast.LENGTH_SHORT).show()
+                if (_b != null) {
+                    Toast.makeText(requireContext(), errorMessage(e), Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -292,13 +302,21 @@ class ProvinceMap : Fragment(R.layout.fragment_province_map) {
                     loadOutbreakHistory()
                 }
             } catch (e: HttpException) {
+                if (_b == null) return@launch
                 if (e.code() == 409) {
                     Toast.makeText(requireContext(), R.string.Resolve_Conflict, Toast.LENGTH_SHORT).show()
+                    // Refresh to reflect already-resolved state
+                    loadMapData()
+                    if (isHistoryMode) loadOutbreakHistory()
                 } else {
                     Toast.makeText(requireContext(), R.string.Resolve_Error, Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), R.string.Resolve_Error, Toast.LENGTH_SHORT).show()
+                if (_b != null) {
+                    Toast.makeText(requireContext(), R.string.Resolve_Error, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }

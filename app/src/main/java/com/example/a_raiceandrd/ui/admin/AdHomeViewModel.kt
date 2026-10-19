@@ -8,6 +8,8 @@ import com.example.a_raiceandrd.data.repository.AdminRepo
 import com.example.a_raiceandrd.model.AdminDashboard
 import com.example.a_raiceandrd.model.DashboardSource
 import com.example.a_raiceandrd.model.Period
+import com.example.a_raiceandrd.util.errorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class AdHomeViewModel : ViewModel() {
@@ -21,13 +23,19 @@ class AdHomeViewModel : ViewModel() {
     private val _error = MutableLiveData<String>()
     val error: LiveData<String> = _error
 
-    fun load() {
+    fun load(forceRefresh: Boolean = false) {
+        if (!forceRefresh && source != null) {
+            publish()
+            return
+        }
         viewModelScope.launch {
             try {
                 source = AdminRepo.getDashboardSource()
                 publish()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _error.value = e.message ?: "Couldn't load the dashboard"
+                _error.value = errorMessage(e)
             }
         }
     }

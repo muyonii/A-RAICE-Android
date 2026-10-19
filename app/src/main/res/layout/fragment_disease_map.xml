@@ -53,6 +53,58 @@
             app:layout_constraintEnd_toEndOf="@id/DMap"
             app:layout_constraintTop_toBottomOf="@id/DMap" />
 
+        <!-- Error state shown when map data fails to load -->
+        <LinearLayout
+            android:id="@+id/mapErrorState"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/DMap_Sub">
+
+            <TextView
+                android:id="@+id/tvMapError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/manrope_regular"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:layout_marginBottom="12dp"
+                tools:text="No internet connection." />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMapRetry"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/ency_retry" />
+        </LinearLayout>
+
+        <!-- Offline warning shown when cached data exists but refresh failed -->
+        <TextView
+            android:id="@+id/tvMapOfflineWarning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/manrope_regular"
+            android:text="@string/Map_Offline_Warning"
+            android:textColor="@color/gold"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/DMap_Sub" />
+
+
         <FrameLayout
             android:id="@+id/mapContainer"
             android:layout_width="0dp"
@@ -192,6 +244,7 @@
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
+
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
